@@ -1,0 +1,2895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemours (CC US) — First-Principles Research Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root {
+  --bg-0: #050811;
+  --bg-1: #0b1020;
+  --bg-2: #11182f;
+  --bg-3: #1a2245;
+  --line: rgba(120, 160, 240, 0.12);
+  --line-strong: rgba(120, 160, 240, 0.28);
+  --text-0: #f1f5ff;
+  --text-1: #c9d3eb;
+  --text-2: #8b97b8;
+  --text-3: #5b6789;
+  --accent: #00d9ff;
+  --accent-dim: #00a6c4;
+  --gold: #ffb84d;
+  --bull: #34d399;
+  --bear: #f87171;
+  --warn: #fbbf24;
+  --purple: #a78bfa;
+  --pink: #f472b6;
+  --orange: #fb923c;
+  --teal: #2dd4bf;
+  --tt-color: #fbbf24;
+  --tss-color: #00d9ff;
+  --apm-color: #a78bfa;
+  --shadow-glow: 0 0 24px rgba(0, 217, 255, 0.18);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-0);
+  color: var(--text-1);
+  line-height: 1.55;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0, 217, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 40%, rgba(167, 139, 250, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(251, 191, 36, 0.04) 0%, transparent 50%),
+    linear-gradient(180deg, #050811 0%, #060912 100%);
+  z-index: -2;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(120, 160, 240, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 160, 240, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: -1;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 70%, transparent 100%);
+}
+
+/* Nav */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5, 8, 17, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+.nav-inner {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--text-0);
+  letter-spacing: -0.02em;
+}
+.nav-brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #00d9ff 0%, #3b82f6 60%, #a78bfa 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(0, 217, 255, 0.4);
+  letter-spacing: -0.04em;
+}
+.nav-brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.nav-links {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+}
+.nav-links a {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 11px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.nav-links a:hover {
+  color: var(--accent);
+  background: rgba(0, 217, 255, 0.08);
+}
+.nav-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-2);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.nav-ticker .price {
+  color: var(--text-0);
+  font-weight: 700;
+}
+.nav-ticker .chg {
+  color: var(--bear);
+  font-weight: 600;
+}
+
+/* Hero */
+.hero {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 56px 32px 32px;
+  position: relative;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(0, 217, 255, 0.08);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 100px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.hero-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+h1.hero-title {
+  font-size: clamp(40px, 5.5vw, 68px);
+  font-weight: 800;
+  line-height: 1.04;
+  color: var(--text-0);
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+}
+h1.hero-title .accent {
+  background: linear-gradient(135deg, #00d9ff 0%, #a78bfa 60%, #f472b6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+h1.hero-title .amber {
+  background: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+  font-size: 18px;
+  color: var(--text-2);
+  margin-bottom: 32px;
+  max-width: 640px;
+  line-height: 1.6;
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 32px;
+}
+.stat-card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.6) 0%, rgba(11, 16, 32, 0.6) 100%);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.4;
+}
+.stat-label {
+  font-size: 10.5px;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-0);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+}
+.stat-unit {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+  margin-left: 4px;
+}
+.stat-chg {
+  font-size: 11.5px;
+  color: var(--bull);
+  margin-top: 4px;
+  font-weight: 600;
+}
+.stat-chg.bear { color: var(--bear); }
+.stat-chg.warn { color: var(--warn); }
+
+/* TradingView panel */
+.tv-panel {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.7) 0%, rgba(11, 16, 32, 0.7) 100%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  height: 520px;
+  position: relative;
+}
+.tv-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.tv-container {
+  height: calc(100% - 50px);
+  position: relative;
+}
+#tv-widget { width: 100%; height: 100%; }
+
+/* Sections */
+section {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 56px 32px;
+  position: relative;
+}
+.section-header {
+  margin-bottom: 40px;
+}
+.section-kicker {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-left: 2px solid var(--accent);
+}
+.section-kicker.amber { color: var(--warn); border-color: var(--warn); }
+.section-kicker.purple { color: var(--purple); border-color: var(--purple); }
+.section-kicker.bear { color: var(--bear); border-color: var(--bear); }
+.section-kicker.bull { color: var(--bull); border-color: var(--bull); }
+.section-kicker.gold { color: var(--gold); border-color: var(--gold); }
+.section-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text-0);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.section-subtitle {
+  font-size: 16px;
+  color: var(--text-2);
+  max-width: 820px;
+  line-height: 1.6;
+}
+
+/* Card */
+.card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.5) 0%, rgba(11, 16, 32, 0.5) 100%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+.card.compact { padding: 22px; }
+.card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.card-desc {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+.gap-12 { gap: 12px; }
+.mt-20 { margin-top: 20px; }
+.mt-32 { margin-top: 32px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.tab {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--text-0); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Primer cards */
+.primer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.primer-card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.5) 0%, rgba(11, 16, 32, 0.5) 100%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.primer-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.primer-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.15), rgba(59, 130, 246, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  font-size: 22px;
+}
+.primer-icon.amber { background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15)); }
+.primer-icon.purple { background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(139, 92, 246, 0.15)); }
+.primer-icon.bear { background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.15)); }
+.primer-icon.bull { background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(16, 185, 129, 0.15)); }
+.primer-h {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 8px;
+}
+.primer-p {
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.primer-p strong { color: var(--text-0); font-weight: 600; }
+.primer-p .acc { color: var(--accent); font-weight: 600; }
+.primer-p .amb { color: var(--warn); font-weight: 600; }
+.primer-p .pur { color: var(--purple); font-weight: 600; }
+.primer-p .bul { color: var(--bull); font-weight: 600; }
+.primer-p .bea { color: var(--bear); font-weight: 600; }
+
+/* Big metric */
+.bigmetric {
+  font-size: 56px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-0);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.bigmetric .unit {
+  font-size: 22px;
+  color: var(--text-2);
+  margin-left: 6px;
+  font-weight: 600;
+}
+.bigmetric.bull { color: var(--bull); }
+.bigmetric.bear { color: var(--bear); }
+.bigmetric.accent { color: var(--accent); }
+.bigmetric.gold { color: var(--gold); }
+.bigmetric.purple { color: var(--purple); }
+.bigmetric.amber { color: var(--warn); }
+
+/* Process flow */
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.flow-step {
+  flex: 1;
+  min-width: 100px;
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.7), rgba(11, 16, 32, 0.7));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+.flow-step:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+}
+.flow-step.cc {
+  border-color: rgba(0, 217, 255, 0.5);
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(59, 130, 246, 0.08));
+}
+.flow-step.amber {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(245, 158, 11, 0.06));
+}
+.flow-step.bear {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.06), rgba(239, 68, 68, 0.06));
+}
+.flow-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.flow-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.flow-sub {
+  font-size: 10.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+.flow-arrow {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* Pills */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pill {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(0, 217, 255, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 100px;
+  font-weight: 600;
+}
+.pill.bull { background: rgba(52, 211, 153, 0.1); color: var(--bull); border-color: rgba(52, 211, 153, 0.2); }
+.pill.bear { background: rgba(248, 113, 113, 0.1); color: var(--bear); border-color: rgba(248, 113, 113, 0.2); }
+.pill.warn { background: rgba(251, 191, 36, 0.1); color: var(--warn); border-color: rgba(251, 191, 36, 0.2); }
+.pill.purple { background: rgba(167, 139, 250, 0.1); color: var(--purple); border-color: rgba(167, 139, 250, 0.2); }
+.pill.gold { background: rgba(255, 184, 77, 0.1); color: var(--gold); border-color: rgba(255, 184, 77, 0.2); }
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  height: 360px;
+  margin-top: 16px;
+}
+.chart-container.tall { height: 460px; }
+.chart-container.short { height: 280px; }
+.chart-container.xshort { height: 220px; }
+
+/* Tables */
+.fin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.fin-table th, .fin-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.fin-table th:first-child, .fin-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.fin-table th {
+  color: var(--text-3);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.2);
+}
+.fin-table td {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-1);
+}
+.fin-table tr:hover td { background: rgba(0, 217, 255, 0.04); }
+.fin-table .pos { color: var(--bull); }
+.fin-table .neg { color: var(--bear); }
+.fin-table .hl-row td {
+  background: rgba(0, 217, 255, 0.06);
+  font-weight: 700;
+  color: var(--text-0);
+}
+.fin-table .sub td {
+  font-size: 12px;
+  color: var(--text-2);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* Bull vs Bear */
+.bullbear-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.bullbear-col {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.5) 0%, rgba(11, 16, 32, 0.5) 100%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+}
+.bullbear-col.bull { border-top: 3px solid var(--bull); }
+.bullbear-col.bear { border-top: 3px solid var(--bear); }
+.bullbear-h {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bullbear-h.bull { color: var(--bull); }
+.bullbear-h.bear { color: var(--bear); }
+.bullbear-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.bullbear-item:last-child { border-bottom: none; }
+.bullbear-item-h {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bullbear-item-p {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.bullbear-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(0, 217, 255, 0.1);
+  color: var(--accent);
+}
+.bullbear-tag.high { background: rgba(248, 113, 113, 0.15); color: var(--bear); }
+.bullbear-tag.med { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+.bullbear-tag.bull { background: rgba(52, 211, 153, 0.15); color: var(--bull); }
+
+/* Quote */
+.quote {
+  border-left: 3px solid var(--accent);
+  padding: 14px 20px;
+  background: rgba(0, 217, 255, 0.04);
+  margin: 14px 0;
+  font-style: italic;
+  color: var(--text-1);
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.quote.bear { border-left-color: var(--bear); background: rgba(248, 113, 113, 0.04); }
+.quote.bull { border-left-color: var(--bull); background: rgba(52, 211, 153, 0.04); }
+.quote.warn { border-left-color: var(--warn); background: rgba(251, 191, 36, 0.04); }
+.quote-src {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Segment cards */
+.segments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.segment-card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.7), rgba(11, 16, 32, 0.7));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.segment-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--seg-color, var(--accent));
+}
+.segment-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--seg-color, var(--line-strong));
+}
+.segment-pct {
+  font-size: 40px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--seg-color, var(--text-0));
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.segment-h {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 4px;
+}
+.segment-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.segment-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+.segment-meta {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.segment-meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.segment-meta-label { color: var(--text-3); }
+.segment-meta-val { color: var(--text-0); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.segment-meta-val.pos { color: var(--bull); }
+.segment-meta-val.neg { color: var(--bear); }
+
+/* Catalyst timeline */
+.timeline {
+  position: relative;
+  padding-left: 30px;
+  margin-top: 24px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--purple), transparent);
+}
+.timeline-item {
+  position: relative;
+  padding: 6px 0 22px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -27px;
+  top: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+.timeline-item.bull::before { background: var(--bull); box-shadow: 0 0 12px var(--bull); }
+.timeline-item.bear::before { background: var(--bear); box-shadow: 0 0 12px var(--bear); }
+.timeline-item.warn::before { background: var(--warn); box-shadow: 0 0 12px var(--warn); }
+.timeline-item.purple::before { background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+.timeline-item .when {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.timeline-item.bull .when { color: var(--bull); }
+.timeline-item.bear .when { color: var(--bear); }
+.timeline-item.warn .when { color: var(--warn); }
+.timeline-item.purple .when { color: var(--purple); }
+.timeline-item .what {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 4px;
+}
+.timeline-item .why {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* Risk grid */
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.risk-card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.5), rgba(11, 16, 32, 0.5));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  position: relative;
+}
+.risk-level {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.risk-level.high { background: rgba(248, 113, 113, 0.15); color: var(--bear); }
+.risk-level.med { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+.risk-level.low { background: rgba(52, 211, 153, 0.15); color: var(--bull); }
+.risk-h {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 8px;
+  padding-right: 60px;
+}
+.risk-p {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--line);
+  padding: 32px 0 48px;
+  margin-top: 56px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+footer .src {
+  font-size: 11px;
+  margin-top: 12px;
+  color: var(--text-3);
+}
+
+/* Compare */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.compare-table th {
+  background: rgba(0, 217, 255, 0.08);
+  color: var(--accent);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.compare-table td {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--text-1);
+}
+.compare-table tr:hover td { background: rgba(0, 217, 255, 0.04); }
+.compare-table td strong { color: var(--text-0); }
+.compare-table td.num { font-family: 'JetBrains Mono', monospace; text-align: right; font-weight: 600; }
+
+/* Bars */
+.bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.bar-label { color: var(--text-1); font-weight: 600; font-size: 12.5px; }
+.bar-track {
+  height: 26px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--bar-color, var(--accent)), var(--bar-color2, var(--accent-dim)));
+  border-radius: 6px;
+  transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 11px;
+  color: #000;
+  font-weight: 700;
+  width: 0;
+}
+.bar-value {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--text-0);
+  font-size: 13px;
+}
+
+/* Leaflet styling */
+.leaflet-map {
+  width: 100%;
+  height: 580px;
+  border-radius: 12px;
+  background: #050811;
+  z-index: 1;
+}
+.leaflet-map.world { height: 540px; }
+.leaflet-container {
+  background: #050811 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.leaflet-tooltip {
+  background: rgba(11, 16, 32, 0.97) !important;
+  border: 1px solid rgba(0, 217, 255, 0.5) !important;
+  color: #f1f5ff !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  box-shadow: 0 0 24px rgba(0, 217, 255, 0.25) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.leaflet-tooltip-top:before { border-top-color: rgba(0, 217, 255, 0.5) !important; }
+.leaflet-tooltip-bottom:before { border-bottom-color: rgba(0, 217, 255, 0.5) !important; }
+.leaflet-popup-content-wrapper {
+  background: rgba(11, 16, 32, 0.97) !important;
+  color: #f1f5ff !important;
+  border: 1px solid rgba(0, 217, 255, 0.5) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 24px rgba(0, 217, 255, 0.25) !important;
+}
+.leaflet-popup-tip { background: rgba(11, 16, 32, 0.97) !important; }
+.leaflet-popup-content { color: #f1f5ff !important; font-size: 12px !important; margin: 12px 14px !important; line-height: 1.55 !important; }
+.leaflet-popup-close-button { color: var(--text-2) !important; }
+.leaflet-control-zoom a {
+  background: rgba(11, 16, 32, 0.95) !important;
+  color: #00d9ff !important;
+  border: 1px solid rgba(0, 217, 255, 0.3) !important;
+}
+.leaflet-control-zoom a:hover { background: rgba(0, 217, 255, 0.15) !important; }
+.leaflet-control-attribution {
+  background: rgba(11, 16, 32, 0.6) !important;
+  color: var(--text-3) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a { color: var(--text-2) !important; }
+
+.map-legend-fixed {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(11, 16, 32, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  z-index: 1000;
+  font-size: 12px;
+  max-width: 260px;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+.map-legend-fixed .lh { font-weight: 700; color: var(--text-0); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.map-legend-fixed .li { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: var(--text-2); font-size: 11.5px; }
+.map-legend-fixed .ldot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.map-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+/* Spotlight */
+.spotlight {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(167, 139, 250, 0.06));
+  border: 1px solid rgba(0, 217, 255, 0.25);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.6;
+}
+.spotlight strong { color: var(--accent); font-weight: 700; }
+.spotlight.amber {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(245, 158, 11, 0.05));
+  border-color: rgba(251, 191, 36, 0.3);
+}
+.spotlight.amber strong { color: var(--warn); }
+.spotlight.bear {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.06), rgba(239, 68, 68, 0.04));
+  border-color: rgba(248, 113, 113, 0.3);
+}
+.spotlight.bear strong { color: var(--bear); }
+.spotlight.purple {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.06), rgba(139, 92, 246, 0.04));
+  border-color: rgba(167, 139, 250, 0.3);
+}
+.spotlight.purple strong { color: var(--purple); }
+
+/* Card titles */
+.h-card { font-size: 17px; font-weight: 700; color: var(--text-0); margin-bottom: 14px; letter-spacing: -0.01em; }
+.h-card .sub { font-size: 11px; color: var(--text-3); font-weight: 500; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* PT distribution */
+.pt-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+.pt-card {
+  background: linear-gradient(135deg, rgba(17, 24, 47, 0.7), rgba(11, 16, 32, 0.7));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+.pt-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.pt-card.bull { border-top: 3px solid var(--bull); }
+.pt-card.neutral { border-top: 3px solid var(--text-2); }
+.pt-card.bear { border-top: 3px solid var(--bear); }
+.pt-bank {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.pt-rating {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  display: inline-block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pt-rating.buy { background: rgba(52, 211, 153, 0.15); color: var(--bull); }
+.pt-rating.neutral { background: rgba(139, 151, 184, 0.15); color: var(--text-1); }
+.pt-rating.hold { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+.pt-rating.sell { background: rgba(248, 113, 113, 0.15); color: var(--bear); }
+.pt-val {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-0);
+  margin-bottom: 2px;
+}
+.pt-chg {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+/* Mobile */
+@media (max-width: 1100px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .grid-4, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
+  .bullbear-grid, .segments-grid { grid-template-columns: 1fr; }
+  .pt-grid { grid-template-columns: repeat(3, 1fr); }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .nav-ticker { display: none; }
+  .section-title { font-size: 30px; }
+}
+@media (max-width: 640px) {
+  .nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .nav-links { justify-content: flex-start; }
+  .hero { padding: 32px 20px; }
+  section { padding: 40px 20px; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .bigmetric { font-size: 42px; }
+  .pt-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Animations */
+@keyframes flow-pulse {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">CC</div>
+      <div>
+        <div>Chemours</div>
+        <div class="nav-brand-sub">CC US · Equity Research</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#primer">Primer</a>
+      <a href="#segments">Segments</a>
+      <a href="#footprint">Footprint</a>
+      <a href="#tio2">TiO2</a>
+      <a href="#refrigerant">HFC→HFO</a>
+      <a href="#datacenter">Data Center</a>
+      <a href="#pfas">PFAS</a>
+      <a href="#hydrogen">Nafion</a>
+      <a href="#financials">Financials</a>
+      <a href="#valuation">Valuation</a>
+      <a href="#bullbear">Bull/Bear</a>
+      <a href="#catalysts">Catalysts</a>
+      <a href="#risks">Risks</a>
+    </div>
+    <div class="nav-ticker">
+      <span>NYSE:CC</span>
+      <span class="price">$22.38</span>
+      <span class="chg">-19.9%</span>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-tag">Live Research · As of 28 May 2026</div>
+      <h1 class="hero-title">A <span class="accent">chemistry house</span> caught between an <span class="amber">Opteon tailwind</span> and a PFAS tail</h1>
+      <p class="hero-subtitle">Spun out of DuPont in 2015, Chemours is the #1 global low-cost producer of titanium dioxide pigment, the only U.S. integrated manufacturer of next-generation Opteon HFO refrigerants under the AIM Act phase-down, and the patent owner of Nafion membranes and Teflon fluoropolymers — all wrapped around a $1.5B-NPV PFAS litigation overhang and a 4.9x leveraged balance sheet.</p>
+
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-label">Market Cap</div>
+          <div class="stat-value" data-counter="3.4" data-suffix="B">0<span class="stat-unit">USD</span></div>
+          <div class="stat-chg bear">$22.38 · -19.9% post-print</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Enterprise Value</div>
+          <div class="stat-value" data-counter="7.2" data-suffix="B">0<span class="stat-unit">USD</span></div>
+          <div class="stat-chg">EV/EBITDA ~8.5x FY26E</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">FY26E EBITDA (mid)</div>
+          <div class="stat-value" data-counter="850" data-suffix="M">0<span class="stat-unit">USD</span></div>
+          <div class="stat-chg">Guidance $800–900M</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Q1'26 EBITDA</div>
+          <div class="stat-value" data-counter="169" data-suffix="M">0<span class="stat-unit">USD</span></div>
+          <div class="stat-chg">+22% vs cons $138M</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Leverage</div>
+          <div class="stat-value" data-counter="4.9" data-suffix="x">0</div>
+          <div class="stat-chg warn">Target &lt;3.8x by YE26</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">2-PIC TAM by 2030</div>
+          <div class="stat-value" data-counter="3" data-suffix="B">0<span class="stat-unit">USD</span></div>
+          <div class="stat-chg">AI data-center cooling</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tv-panel">
+      <div class="tv-header">
+        <span><strong style="color:var(--text-0)">CC</strong> · NYSE · USD</span>
+        <span>Powered by TradingView</span>
+      </div>
+      <div class="tv-container">
+        <div id="tv-widget"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIMER -->
+<section id="primer">
+  <div class="section-header">
+    <div class="section-kicker">First Principles</div>
+    <h2 class="section-title">If you've never read a Chemours filing, start here</h2>
+    <p class="section-subtitle">Chemours sells three categories of fluorine- and titanium-based chemistry that almost nobody outside the industry can name. Below: what the three segments actually make, who buys it, and why the company is interesting <em>and</em> dangerous at once.</p>
+  </div>
+
+  <div class="primer-grid">
+    <div class="primer-card">
+      <div class="primer-icon amber">⚪</div>
+      <div class="primer-h">What is TiO2 and why does it matter?</div>
+      <div class="primer-p"><strong>Titanium dioxide</strong> is the white pigment in roughly every white surface around you — <strong>paints, plastics, paper, sunscreen, food coloring</strong>. It scatters light with unmatched efficiency, giving whiteness, brightness and UV protection. Demand tracks <strong>construction, housing, and packaging</strong> — i.e. global GDP. <span class="acc">Chemours' Ti-Pure brand</span> is the largest TiO2 brand globally at ~11% of ~10M tons of nameplate capacity.</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon">❄️</div>
+      <div class="primer-h">What is an HFO refrigerant?</div>
+      <div class="primer-p"><strong>HFO = hydrofluoroolefin</strong>. The next-generation refrigerant. The old HFCs (Freon R-134a etc.) have <strong>high Global Warming Potential</strong> — kilo-for-kilo they trap thousands of times more heat than CO2. HFOs contain a <strong>carbon double-bond</strong> that breaks down in days in the atmosphere, giving <strong>near-zero GWP</strong>. Regulators are forcibly switching every air conditioner, fridge and chiller from HFC to HFO. <span class="acc">Chemours' Opteon</span> is one of only two scale HFO franchises globally (Honeywell Solstice is the other).</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon purple">🔬</div>
+      <div class="primer-h">What is a fluoropolymer?</div>
+      <div class="primer-p"><strong>Plastics built around the carbon-fluorine bond</strong> — the strongest single bond in organic chemistry. Result: extreme heat resistance, chemical inertness, lowest friction known. Used wherever ordinary plastics fail: <strong>semiconductor wet-chemistry tubing</strong>, <strong>EV battery binders (PVDF)</strong>, <strong>aerospace seals</strong>, <strong>chemical reactors</strong>, <strong>data-center immersion-cooling baths</strong>. <span class="acc">Chemours owns the Teflon, Viton, Krytox and Nafion brands</span> — the original DuPont fluorochemistry portfolio.</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon bear">⚠️</div>
+      <div class="primer-h">What are PFAS, and why is everyone suing?</div>
+      <div class="primer-p"><strong>Per- and polyfluoroalkyl substances</strong> — thousands of synthetic compounds defined by that same C-F bond. They <strong>don't break down</strong> in the environment — hence "forever chemicals". DuPont's <strong>PFOA</strong> (used to make Teflon) and 3M's <strong>PFOS</strong> (in firefighting foam) are tied to cancer cluster lawsuits. Chemours inherited every legacy PFAS site when it was spun out of DuPont in 2015. <span class="bea">~120-130k AFFF MDL personal-injury claims, &gt;$750M of pending exposure outside the NJ settlement</span>.</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon">🧪</div>
+      <div class="primer-h">What is Nafion?</div>
+      <div class="primer-p">A <strong>proprietary ion-exchange membrane</strong> — sulfonated tetrafluoroethylene. The plastic equivalent of a salt bridge. Conducts protons, blocks gas. Used in: <span class="pur">PEM hydrogen electrolyzers</span> (splits water into H2 + O2), <span class="pur">PEM fuel cells</span> (the reverse — H2 → electricity), and <strong>chlor-alkali plants</strong> (chlorine production). The "green hydrogen optionality" everyone trades. <span class="amb">Chemours just paused its France Nafion expansion — third-party demand projections came in too weak.</span></div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon bull">💧</div>
+      <div class="primer-h">What is two-phase immersion cooling?</div>
+      <div class="primer-p">AI servers run at <strong>1 megawatt per rack</strong> — air cooling can't dump that much heat. Solution: <strong>submerge the servers in a fluorochemical bath</strong> that boils at ~50°C. The vapor condenses at the top of the tank and drips back down — passive heat removal. Uses <span class="bul">~60% less energy and 90% less water</span> than chillers. <span class="acc">Chemours' Opteon 2P50</span> was just <strong>qualified by Samsung for Gen-4 SSDs</strong> — first 2-phase fluid Samsung has ever approved. RBC sees <strong>$3B TAM</strong> producing EBITDA equal to entire Opteon franchise by 2030.</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon">📜</div>
+      <div class="primer-h">What's the AIM Act?</div>
+      <div class="primer-p">U.S. <strong>American Innovation &amp; Manufacturing Act</strong>, signed 2020. Mandates an <strong>85% phase-down of HFCs by 2036</strong> using a step-down quota system, with the EPA controlling quota allocation. Mirrors the global Kigali Amendment (2016) and the EU's revised F-Gas Regulation (full ban on high-GWP gases by 2030). <span class="acc">This is the forced-conversion thesis behind every Opteon dollar of revenue.</span> Bears: patents expire ~2030, generics arrive. Bulls: aftermarket installed base grows for decades regardless.</div>
+    </div>
+
+    <div class="primer-card">
+      <div class="primer-icon bear">⚖️</div>
+      <div class="primer-h">What's the DuPont indemnity?</div>
+      <div class="primer-p">When DuPont spun off Chemours in 2015, it tried to hand over <strong>all the PFAS liability</strong> as well. After a 2017 restructure (and a near-default by Chemours), DuPont, Corteva (the spun-off ag business) and Chemours signed a <strong>$4 billion cost-sharing cap</strong> — <strong>Chemours pays 50%</strong>, DuPont 49%, Corteva 17% (overage covered). The trade today is essentially: <span class="bul">how much $4B headroom is left vs.</span> <span class="bea">how fast the AFFF MDL eats it</span>.</div>
+    </div>
+  </div>
+
+  <div class="spotlight" style="margin-top: 32px;">
+    <strong>The investment debate in one line:</strong> &nbsp;Is the Opteon ramp into 2036 + the 2-PIC data-center optionality + the chloride-route TiO2 cost advantage enough to outweigh ~$1.5B of PFAS net-present-value liability, a 4.9x leveraged balance sheet, and HFO patent expiry around 2030? Sell-side price targets span <strong>$12 (CFRA Sell)</strong> to <strong>$30 (UBS/Mizuho Buy)</strong> — a 2.5x range that captures exactly that tension.
+  </div>
+</section>
+
+<!-- SEGMENTS -->
+<section id="segments">
+  <div class="section-header">
+    <div class="section-kicker">Three Segments</div>
+    <h2 class="section-title">TT, TSS, APM — and why they trade like three different companies</h2>
+    <p class="section-subtitle">Each segment has its own cycle, its own moat, its own end-markets, and its own regulatory regime. The bull case lives in TSS today, TT through 2027-28, and APM in 2030+. The bear case lives in APM (PFAS) and in TSS (patent cliff).</p>
+  </div>
+
+  <div class="segments-grid">
+    <div class="segment-card" style="--seg-color: var(--tt-color);">
+      <div class="segment-pct">45%</div>
+      <div class="segment-h">Titanium Technologies (TT)</div>
+      <div class="segment-sub">Ti-Pure pigment · #1 global producer</div>
+      <div class="segment-desc">Chloride-route titanium dioxide — the white pigment in paints, plastics, paper. Sustainable <strong>500-1,000 bps margin advantage</strong> over sulfate-route Chinese competitors. Sulfur cost spike (+140% YoY) is crushing the sulfate cost curve right now.</div>
+      <div class="segment-meta">
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 Revenue</span><span class="segment-meta-val">$559M</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 EBITDA</span><span class="segment-meta-val neg">$18M (-64% YoY)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Margin</span><span class="segment-meta-val">3.2%</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Global capacity</span><span class="segment-meta-val">~1.1M MT (11%)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">FY27E EBITDA (UBS)</span><span class="segment-meta-val pos">$347M</span></div>
+      </div>
+    </div>
+
+    <div class="segment-card" style="--seg-color: var(--tss-color);">
+      <div class="segment-pct">32%</div>
+      <div class="segment-h">Thermal &amp; Specialized Solutions (TSS)</div>
+      <div class="segment-sub">Opteon HFO refrigerants + Freon HFC</div>
+      <div class="segment-desc">Regulatory growth story. Patent-protected Opteon refrigerants forced into every auto AC, chiller, supermarket case by AIM Act / Kigali. Q1'26 was a record quarter. Also includes the new <strong>2-phase immersion cooling fluid</strong> for AI data centers.</div>
+      <div class="segment-meta">
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 Revenue</span><span class="segment-meta-val pos">$568M (+22%)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 EBITDA</span><span class="segment-meta-val pos">$190M (+35%)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Margin</span><span class="segment-meta-val">33.5%</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Opteon FY25 sales</span><span class="segment-meta-val">$1.27B</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">FY28E Opteon (UBS)</span><span class="segment-meta-val pos">$1.82B</span></div>
+      </div>
+    </div>
+
+    <div class="segment-card" style="--seg-color: var(--apm-color);">
+      <div class="segment-pct">23%</div>
+      <div class="segment-h">Advanced Performance Materials (APM)</div>
+      <div class="segment-sub">Teflon · Viton · Krytox · Nafion</div>
+      <div class="segment-desc">High-end fluoropolymers into semi, EV, aerospace, chem processing. Carries both the <span class="acc" style="color:var(--accent);font-weight:600">2-PIC data-center upside</span> and the <span class="bea" style="color:var(--bear);font-weight:600">EU REACH PFAS-ban downside</span>. Q1'26 hit by Washington Works outage ($20-25M earnings drag).</div>
+      <div class="segment-meta">
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 Revenue</span><span class="segment-meta-val neg">$243M (-17%)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Q1'26 EBITDA</span><span class="segment-meta-val neg">$5M (-84%)</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">Margin</span><span class="segment-meta-val">2.1%</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">EU REACH revenue risk</span><span class="segment-meta-val neg">3.6%</span></div>
+        <div class="segment-meta-row"><span class="segment-meta-label">2-PIC TAM by 2030</span><span class="segment-meta-val pos">$3B</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2-1 mt-32">
+    <div class="card">
+      <div class="h-card">Revenue &amp; EBITDA mix · FY25 actual <span class="sub">($5.81B / $742M)</span></div>
+      <div class="chart-container">
+        <canvas id="segment-mix"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="h-card">Q1'26 EBITDA decomposition</div>
+      <div style="margin-top: 14px;">
+        <div class="bar-row">
+          <div class="bar-label">TSS</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="100" style="--bar-color: #00d9ff; --bar-color2: #0891b2;">$190M</div></div>
+          <div class="bar-value">112%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">TT</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="9.5" style="--bar-color: #fbbf24; --bar-color2: #f59e0b;">$18M</div></div>
+          <div class="bar-value">11%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">APM</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="2.6" style="--bar-color: #a78bfa; --bar-color2: #8b5cf6;">$5M</div></div>
+          <div class="bar-value">3%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Other</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="1.6" style="--bar-color: #2dd4bf; --bar-color2: #14b8a6;">$3M</div></div>
+          <div class="bar-value">2%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Corporate</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="24.7" style="--bar-color: #f87171; --bar-color2: #ef4444;">-$47M</div></div>
+          <div class="bar-value">-28%</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--text-2); line-height: 1.5;">
+        TSS carried <strong style="color: var(--accent)">112% of consolidated EBITDA</strong> in Q1'26 — meaning every other segment combined detracted. This is what a "one-segment story" looks like in real time.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTPRINT -->
+<section id="footprint">
+  <div class="section-header">
+    <div class="section-kicker purple">Global Footprint</div>
+    <h2 class="section-title">28 production facilities across 8 countries</h2>
+    <p class="section-subtitle">Hover any pin to see what's made there, why it matters, and what's happening to it. Half the network is concentrated in the U.S. Gulf Coast and Carolinas. Europe houses the fluoropolymer + chlor-alkali plants — exactly where the PFAS regulators live. Asia presence is being deliberately rationalized (Kuan Yin sold, Nafion-France paused).</p>
+  </div>
+
+  <div class="map-wrap" style="margin-top: 24px;">
+    <div id="footprint-map" class="leaflet-map world"></div>
+    <div class="map-legend-fixed">
+      <div class="lh">Facility type</div>
+      <div class="li"><div class="ldot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></div>TT — Titanium Tech</div>
+      <div class="li"><div class="ldot" style="background:#00d9ff;box-shadow:0 0 8px #00d9ff"></div>TSS — Refrigerants / fluoroproducts</div>
+      <div class="li"><div class="ldot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa"></div>APM — Fluoropolymers / Nafion</div>
+      <div class="li"><div class="ldot" style="background:#f87171;box-shadow:0 0 8px #f87171"></div>Divested / paused / outage</div>
+      <div class="li"><div class="ldot" style="background:#34d399;box-shadow:0 0 8px #34d399"></div>HQ — Wilmington, DE</div>
+    </div>
+  </div>
+
+  <div class="grid-3 mt-32">
+    <div class="primer-card">
+      <div class="primer-icon">🇺🇸</div>
+      <div class="primer-h">North America = 73% of EBITDA gravity</div>
+      <div class="primer-p">Gulf Coast (Corpus Christi TX) houses the recently-expanded Opteon line (+40% capacity). DeLisle MS + New Johnsonville TN run the chloride TiO2 base load. <strong>Fayetteville Works NC</strong> is where Teflon, Nafion AND the PFAS consent-order remediation all sit on the same campus.</div>
+    </div>
+    <div class="primer-card">
+      <div class="primer-icon bear">🇪🇺</div>
+      <div class="primer-h">Europe = the regulatory front line</div>
+      <div class="primer-p"><strong>Dordrecht (NL)</strong> has been the European fluorochemicals hub for decades. Chemours just committed <strong>€75M to retool emissions</strong> ahead of EU REACH PFAS restrictions. <strong>Villers-Saint-Paul (FR)</strong> — Nafion expansion <span class="bea">placed on long-term hold</span> after demand projections weakened. <strong>Mechelen (BE)</strong> + smaller specialty sites round out APM.</div>
+    </div>
+    <div class="primer-card">
+      <div class="primer-icon warn">🌏</div>
+      <div class="primer-h">Asia footprint actively rationalizing</div>
+      <div class="primer-p"><strong>Kuan Yin (Taiwan) sold Jan 2026 for $360M gross</strong> — part of TT Transformation, ~$100M run-rate cost benefit, €140M used to repay Euro Term loans. <strong>Changshu (China)</strong> retained as APM contract manufacturing. New <strong>SRF partnership (India)</strong> Aug 2025 for fluoroelastomer capacity with no upfront capex.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TIO2 -->
+<section id="tio2">
+  <div class="section-header">
+    <div class="section-kicker amber">Cycle Lens · Titanium Technologies</div>
+    <h2 class="section-title">Why chloride beats sulfate (and why sulfur just made it brutal)</h2>
+    <p class="section-subtitle">There are exactly two ways to make TiO2 pigment: the chloride process (Chemours, Tronox, Venator) and the sulfate process (Kronos, almost every Chinese producer). The processes don't compete on product quality — they compete on input costs. Sulfur just spiked 140% year-on-year, which is asymmetric pain for sulfate producers.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="h-card">Chloride route <span class="sub">Chemours / Tronox / Venator</span></div>
+      <div class="flow">
+        <div class="flow-step amber">
+          <div class="flow-icon">⛏️</div>
+          <div class="flow-title">Rutile / Ilmenite</div>
+          <div class="flow-sub">flexible ore mix</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step amber">
+          <div class="flow-icon">🔥</div>
+          <div class="flow-title">Cl2 + Coke 1000°C</div>
+          <div class="flow-sub">→ TiCl4 vapor</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step cc">
+          <div class="flow-icon">💎</div>
+          <div class="flow-title">Rutile TiO2</div>
+          <div class="flow-sub">premium grade</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; font-size: 13px; color: var(--text-2); line-height: 1.6;">
+        Higher energy, lower waste, premium product, <strong style="color: var(--bull)">500-1,000 bps margin advantage</strong>. Iron chloride waste stream now monetized as <strong>mixed rare-earth concentrate (mREC)</strong> via the Energy Fuels alliance — near-zero incremental feedstock cost.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Sulfate route <span class="sub">Kronos · LB Group · most Chinese</span></div>
+      <div class="flow">
+        <div class="flow-step bear">
+          <div class="flow-icon">⛏️</div>
+          <div class="flow-title">Ilmenite only</div>
+          <div class="flow-sub">higher grade needed</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step bear">
+          <div class="flow-icon">🧪</div>
+          <div class="flow-title">H2SO4 digest</div>
+          <div class="flow-sub">huge sulfur demand</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">💎</div>
+          <div class="flow-title">Anatase or Rutile</div>
+          <div class="flow-sub">both crystal forms</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px; font-size: 13px; color: var(--text-2); line-height: 1.6;">
+        Lower energy, but huge spent-acid waste streams and locked to one feedstock. <strong style="color: var(--bear)">Whoever pays the highest sulfur price loses</strong>. Chinese sulfur prices have surged <strong>~300%</strong> per SMIFS — actively pushing sulfate competitors up the global cost curve.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <div class="card">
+      <div class="h-card">Sulfur price: the cycle-changer <span class="sub">$/long ton</span></div>
+      <div class="chart-container">
+        <canvas id="sulfur-chart"></canvas>
+      </div>
+      <div class="spotlight amber" style="margin-top: 14px; margin-bottom: 0;">
+        <strong>Q2'26 sulfur = $655/lt, +140% YoY.</strong> Middle East shipping disruption (Strait of Hormuz) is the proximate cause. RBC: "Creates relative cost advantage for U.S.-based producers while curtailing international capacity."
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Global TiO2 capacity share <span class="sub">2025 estimate</span></div>
+      <div class="chart-container">
+        <canvas id="tio2-capacity"></canvas>
+      </div>
+      <div style="margin-top: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.5;">
+        Chinese nameplate ~6.2M MT (Mizuho) on a global ~10M MT base — but utilization is constrained by sulfur cost squeeze + EU/US anti-dumping. <strong style="color:var(--text-0)">LB Group</strong> is the disruptive Chinese leader exporting into Europe at margin-destructive prices.
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-32">
+    <div class="h-card">TiO2 cycle — peak to trough to ?</div>
+    <div class="grid-4" style="gap: 12px;">
+      <div style="background: rgba(11,16,32,0.5); border: 1px solid var(--line); border-radius: 10px; padding: 16px;">
+        <div style="font-size:11px;color:var(--text-3);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;font-weight:700">Late 2022</div>
+        <div style="font-size:15px;color:var(--text-0);font-weight:700;margin-bottom:6px">Cyclical peak</div>
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.55">TT delivered $1B+ EBITDA at peak — paint demand boom, housing strong, no Chinese floods yet.</div>
+      </div>
+      <div style="background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 16px;">
+        <div style="font-size:11px;color:var(--bear);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;font-weight:700">2023-2025</div>
+        <div style="font-size:15px;color:var(--text-0);font-weight:700;margin-bottom:6px">Destocking + China flood</div>
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.55">4 consecutive quarters of YoY volume declines. EBITDA fell to $145M for FY25. Anti-dumping (EU 32%, US Section 302) starts to bite.</div>
+      </div>
+      <div style="background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.2); border-radius: 10px; padding: 16px;">
+        <div style="font-size:11px;color:var(--warn);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;font-weight:700">2026</div>
+        <div style="font-size:15px;color:var(--text-0);font-weight:700;margin-bottom:6px">Bottoming</div>
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.55">Q1'26 TT volume +3% Q/Q after 4 down quarters. December '25 + April '26 price hikes "appear to be accepted" (Jefferies). Channel inventory below normal.</div>
+      </div>
+      <div style="background: rgba(52,211,153,0.05); border: 1px solid rgba(52,211,153,0.2); border-radius: 10px; padding: 16px;">
+        <div style="font-size:11px;color:var(--bull);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;font-weight:700">H2'26 → FY27</div>
+        <div style="font-size:15px;color:var(--text-0);font-weight:700;margin-bottom:6px">Early upcycle</div>
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.55">UBS bull: $347M TT EBITDA FY27. Driver = pricing on cost-curve push, not volume recovery. "Bottoming but softer-for-longer" (Jefferies).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote bull mt-32">
+    "Chemours' scale and feedstock flexibility provide a sustainable 500 to 1,000 basis point margin advantage over its peers."
+    <div class="quote-src">RBC Capital Markets — defines the TiO2 moat</div>
+  </div>
+  <div class="quote warn">
+    "Sulfur prices in China have recently surged nearly 300%, severely impacting sulfate-based TiO2 producers... global sulfur shortage has created highly favorable pricing conditions for Western chloride-route producers."
+    <div class="quote-src">SMIFS Institutional Research — the cycle-changer</div>
+  </div>
+</section>
+
+<!-- REFRIGERANT -->
+<section id="refrigerant">
+  <div class="section-header">
+    <div class="section-kicker">Regulatory Cycle · Thermal &amp; Specialized Solutions</div>
+    <h2 class="section-title">The HFC-to-HFO forced switch</h2>
+    <p class="section-subtitle">Every car AC unit, supermarket refrigeration case, and chiller in the U.S. has to swap its refrigerant by 2036 — by federal law. This is a forced replacement cycle, not a discretionary one. Chemours' Opteon franchise sits on one side of the trade; Honeywell's Solstice on the other. The only question for investors is what happens when the patents expire.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="h-card">HFC vs HFO chemistry <span class="sub">why GWP collapsed</span></div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Property</th><th>HFC (Freon)</th><th>HFO (Opteon)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Structure</td><td>Saturated C-C</td><td>Unsaturated C=C</td></tr>
+          <tr><td>Atmospheric lifetime</td><td>10-50 years</td><td><strong style="color:var(--bull)">~11 days</strong></td></tr>
+          <tr><td>GWP (vs CO2)</td><td>1,300-3,900</td><td><strong style="color:var(--bull)">~1-4</strong></td></tr>
+          <tr><td>ODP</td><td>Zero</td><td>Zero</td></tr>
+          <tr><td>Patent expiry</td><td>—</td><td><strong style="color:var(--bear)">~2029-2031</strong></td></tr>
+          <tr><td>Example product</td><td>R-134a, R-410A</td><td>R-1234yf, R-454B</td></tr>
+        </tbody>
+      </table>
+      <div class="spotlight" style="margin-bottom:0;margin-top:18px"><strong>The key insight:</strong> the carbon double bond in HFO is rapidly oxidized by atmospheric hydroxyl radicals — so HFOs don't persist long enough to act as greenhouse gases.</div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Regulatory phase-down timeline <span class="sub">cumulative HFC quota cap</span></div>
+      <div class="chart-container">
+        <canvas id="aim-act-chart"></canvas>
+      </div>
+      <div style="margin-top: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.5;">
+        AIM Act (US) tracks Kigali Amendment globally. <strong style="color:var(--text-0)">Stationary HVAC sell-through deadline = Jan 2026</strong>. Next step-down = 70% cap in 2029, 85% by 2036. EU F-Gas Regulation bans high-GWP gases <strong>by 2030</strong> — earlier than US.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <div class="card">
+      <div class="h-card">Opteon franchise scale-up</div>
+      <div class="chart-container">
+        <canvas id="opteon-chart"></canvas>
+      </div>
+      <div style="margin-top: 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.5;">
+        UBS models Opteon sales from $810M (FY24) to <strong style="color:var(--text-0)">$1.82B by FY28</strong> — driven by 12-14% volume growth on regulation. Corpus Christi capacity already +40% expanded.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Patent cliff vs aftermarket annuity</div>
+      <div class="bullbear-grid" style="grid-template-columns: 1fr;">
+        <div style="background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 16px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-0); margin-bottom: 8px;">⚠️ Bear: 2030 patent wall</div>
+          <div style="font-size: 13px; color: var(--text-2); line-height: 1.55;">"Expiration of lucrative HFO patents around 2030 will likely invite aggressive competition from generic Asian producers, further pressuring legacy margins." Honeywell already has a slight edge on R-454B patent + capacity (per Johnson Controls).</div>
+        </div>
+        <div style="background: rgba(52,211,153,0.05); border: 1px solid rgba(52,211,153,0.2); border-radius: 10px; padding: 16px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-0); margin-bottom: 8px;">✓ Bull: installed-base annuity</div>
+          <div style="font-size: 13px; color: var(--text-2); line-height: 1.55;">"Margin uplift expected as installed base of R-454B equipment enters service" — aftermarket margin is structurally higher than OEM, and the installed base only grows through 2050+. Pricing has shifted to <strong>maintenance refrigerants rather than OEM sales</strong> (GS).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spotlight purple mt-32">
+    <strong>Why TSS just had a record quarter:</strong> Q1'26 TSS revenue +22% Y/Y, EBITDA +35% Y/Y, margin 33.5%. The beat was driven by automotive Freon (HFC) pricing in North America — <strong>a peer's operational outage tightened HFC supply</strong>, and Chemours could raise price into it. Bears worry the HFC pricing bounce won't persist; bulls argue it's a structural tailwind as channel inventories normalize ahead of the AIM Act 70% step-down.
+  </div>
+</section>
+
+<!-- DATA CENTER -->
+<section id="datacenter">
+  <div class="section-header">
+    <div class="section-kicker gold">The Data-Center Optionality</div>
+    <h2 class="section-title">Two-phase immersion cooling — the new Opteon, by 2030</h2>
+    <p class="section-subtitle">AI servers run at densities that air-cooling can't handle. The industry is rapidly converging on submerging the boards in a fluorochemical bath that boils at ~50°C, with the vapor condensing on a cold plate and dripping back. Chemours owns one of the only two qualified two-phase fluids globally. Samsung just qualified it for Gen-4 SSDs.</p>
+  </div>
+
+  <div class="grid-2-1">
+    <div class="card">
+      <div class="h-card">How two-phase immersion cooling (2-PIC) works</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-icon">🖥️</div>
+          <div class="flow-title">Server in tank</div>
+          <div class="flow-sub">submerged in Opteon 2P50</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step amber">
+          <div class="flow-icon">🔥</div>
+          <div class="flow-title">CPU heats</div>
+          <div class="flow-sub">300-1000W chip</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step cc">
+          <div class="flow-icon">💨</div>
+          <div class="flow-title">Fluid boils 50°C</div>
+          <div class="flow-sub">vapor rises</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">💧</div>
+          <div class="flow-title">Cold plate</div>
+          <div class="flow-sub">condenses to liquid</div>
+        </div>
+        <div class="flow-arrow">↻</div>
+        <div class="flow-step cc">
+          <div class="flow-icon">🌊</div>
+          <div class="flow-title">Drips back</div>
+          <div class="flow-sub">passive loop</div>
+        </div>
+      </div>
+      <div style="margin-top: 18px; font-size: 13.5px; color: var(--text-2); line-height: 1.6;">
+        Boiling absorbs <strong>~10x more heat per unit volume</strong> than convection (latent vs sensible). No pumps. No fans. <strong>Up to 90% lower cooling energy, 60% less data-center footprint, near-zero water.</strong> Reaches commercialization late 2026; Samsung qualified Aug 2025; Navin Fluorine first manufacturing site mid-2026.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">TAM ramp <span class="sub">RBC base case</span></div>
+      <div class="chart-container short">
+        <canvas id="dc-tam"></canvas>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:var(--text-2);line-height:1.55">
+        <strong style="color:var(--gold)">By 2030</strong>, RBC expects EBITDA from 2-PIC to be <strong>comparable to entire Opteon franchise</strong>.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3 mt-32">
+    <div class="primer-card">
+      <div class="primer-icon">📱</div>
+      <div class="primer-h">Samsung Gen-4 SSD qualification</div>
+      <div class="primer-p">First <strong>two-phase fluid Samsung has ever approved</strong>. Came after commercial-scale 48U tank trials in Aug 2025. Validates Opteon 2P50 chemistry for memory/storage hyperscale builds.</div>
+    </div>
+    <div class="primer-card">
+      <div class="primer-icon purple">🇮🇳</div>
+      <div class="primer-h">Navin Fluorine partnership</div>
+      <div class="primer-p"><strong>First global manufacturing site for liquid cooling fluid</strong> opens mid-2026. Initial $14M investment; <strong>Phase 2 could scale ~10x</strong>. Asymmetric capex commitment — Chemours owns the IP, partner takes the capex risk.</div>
+    </div>
+    <div class="primer-card">
+      <div class="primer-icon">⚡</div>
+      <div class="primer-h">EPA TSCA prioritization</div>
+      <div class="primer-p">Sep 2025 — EPA prioritized TSCA reviews for data-center chemicals. <strong>Regulatory tailwind</strong>: speeds market access for low-GWP cooling fluids while raising barriers for legacy alternatives. Data Volt partnership (May 2025) accelerates hyperscaler adoption.</div>
+    </div>
+  </div>
+
+  <div class="quote bull mt-32">
+    "Two-phase immersion cooling fluid represents a $3 billion total addressable market that could produce EBITDA contributions similar to the core Opteon portfolio by 2030."
+    <div class="quote-src">RBC Capital Markets — base case</div>
+  </div>
+</section>
+
+<!-- PFAS -->
+<section id="pfas">
+  <div class="section-header">
+    <div class="section-kicker bear">The Tail Risk</div>
+    <h2 class="section-title">PFAS — how to underwrite "forever chemicals"</h2>
+    <p class="section-subtitle">PFAS is the load-bearing bear case. Every Chemours fluoropolymer was historically made using PFAS processing aids (PFOA, then GenX). The legal architecture is a multi-front war: federal AFFF MDL in South Carolina, state AG suits, and the DuPont/Corteva indemnity MOU that ring-fences part of it. Understanding the $4B cap and where Chemours sits inside it is the single biggest variant view on the stock.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="h-card">PFAS in one slide</div>
+      <div class="primer-p" style="font-size:14px;color:var(--text-1);line-height:1.65">
+        <strong>PFAS</strong> = per- and polyfluoroalkyl substances. Thousands of compounds, all defined by at least one fully-fluorinated carbon. The C-F bond is so strong they <strong>don't break down in nature</strong> — "forever chemicals". They bio-accumulate in blood and tissue.
+        <br><br>
+        <strong>Long-chain:</strong> <span class="bea">PFOA, PFOS</span> — original DuPont/3M chemistry. Linked in epidemiology studies to kidney/testicular cancer, ulcerative colitis, thyroid disease, pregnancy-induced hypertension. <strong>Phased out post-2015.</strong>
+        <br><br>
+        <strong>Short-chain (next-gen):</strong> <span class="acc">GenX (HFPO-DA)</span> — Chemours' own replacement chemistry, developed in 2009 as a polymerization aid. Marketed as safer. <strong>Regulators don't fully buy it</strong> — EPA set a 10 ppt drinking water limit (vs 4 ppt for PFOA). EU REACH proposes banning PFAS as a class, including short-chain.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">The $4B cost-sharing cap — what's been spent, what's left</div>
+      <div class="chart-container">
+        <canvas id="pfas-cap"></canvas>
+      </div>
+      <div class="spotlight bear" style="margin-top:14px;margin-bottom:0">
+        <strong>The trade:</strong> AFFF MDL personal-injury claims at <strong>120-130k</strong> with <strong>15,000+ active lawsuits</strong>. Bellwether trials late 2026-2027. If the next round of settlements consumes the remaining $1.2-1.4B headroom, Chemours "would suddenly assume full, unmitigated exposure" (Capstone DC).
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <div class="card">
+      <div class="h-card">Indemnity waterfall <span class="sub">DuPont / Corteva / Chemours MOU 2017</span></div>
+      <div style="margin-top: 14px;">
+        <div class="bar-row">
+          <div class="bar-label">Chemours (49-50%)</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="100" style="--bar-color: #f87171; --bar-color2: #ef4444;">50%</div></div>
+          <div class="bar-value">$2.0B</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">DuPont (49%)</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="98" style="--bar-color: #00d9ff; --bar-color2: #0891b2;">49%</div></div>
+          <div class="bar-value">$1.96B</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Corteva (17%)</div>
+          <div class="bar-track"><div class="bar-fill" data-bar="34" style="--bar-color: #a78bfa; --bar-color2: #8b5cf6;">17%</div></div>
+          <div class="bar-value">$0.68B</div>
+        </div>
+      </div>
+      <div style="margin-top:18px;font-size:12.5px;color:var(--text-2);line-height:1.6">
+        <strong style="color: var(--text-0)">Mechanics:</strong> Chemours pays first 50%. Corteva covers 17% of the next bucket. DuPont covers the rest up to the $4B cap. <strong>NJ Settlement Aug 2025:</strong> $875M state-wide → Chemours' 50% ≈ $438M nominal → 25-yr payment schedule discounts to <strong>~$250-270M NPV</strong>. No out-of-pocket cash through 2030.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Litigation theater <span class="sub">where the cases live</span></div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Forum</th><th>Type</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>SC Federal AFFF MDL</strong></td>
+            <td>Firefighting foam — personal injury + water districts</td>
+            <td><strong style="color:var(--bear)">120-130k claims</strong></td>
+          </tr>
+          <tr>
+            <td><strong>NJ Judicial Consent</strong></td>
+            <td>State AG natural resource damages</td>
+            <td><strong style="color:var(--bull)">Settled $875M (Aug 2025)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>NC AG suit</strong></td>
+            <td>State AG natural resource damages</td>
+            <td><strong style="color:var(--warn)">NC Sup. Ct. hearing (March 2026)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Public water system</strong></td>
+            <td>National multi-state settlement</td>
+            <td><strong style="color:var(--bull)">Resolved $1.185B</strong></td>
+          </tr>
+          <tr>
+            <td><strong>EU REACH</strong></td>
+            <td>Class restriction (regulatory)</td>
+            <td><strong style="color:var(--bear)">Adoption ~2029, 3.6% rev risk</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Fayetteville Works</strong></td>
+            <td>Federal consent order</td>
+            <td>Ongoing remediation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="quote bear mt-32">
+    "If the surging volume of AFFF personal injury lawsuits exhausts the remaining $1.2 billion to $1.4 billion headroom under the cost-sharing cap, Chemours would suddenly assume full, unmitigated exposure to all outstanding liabilities."
+    <div class="quote-src">Capstone DC — the tail risk that prices the stock</div>
+  </div>
+  <div class="quote bull">
+    "The $4 billion cost-sharing agreement established with DuPont and Corteva effectively ring-fences near-term cash flows, suggesting that catastrophic end-point negative headlines are no longer the most probable scenario."
+    <div class="quote-src">Mizuho Securities USA — the counterview</div>
+  </div>
+</section>
+
+<!-- HYDROGEN -->
+<section id="hydrogen">
+  <div class="section-header">
+    <div class="section-kicker purple">The Optionality That Isn't (Yet)</div>
+    <h2 class="section-title">Nafion membranes &amp; the green hydrogen economy</h2>
+    <p class="section-subtitle">Every chart in 2022 had a hydrogen line going up and to the right. Reality has been more disciplined. Chemours' Nafion is the proton-exchange-membrane (PEM) of choice for green hydrogen electrolyzers — but management just paused capacity expansion. The bull thesis lives in 2030+ optionality, not 2026 earnings.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="h-card">How a PEM electrolyzer splits water</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-icon">💧</div>
+          <div class="flow-title">Water in</div>
+          <div class="flow-sub">2 H2O</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step amber">
+          <div class="flow-icon">⚡</div>
+          <div class="flow-title">Anode</div>
+          <div class="flow-sub">O2 + 4 H+ + 4 e-</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step cc">
+          <div class="flow-icon">🔬</div>
+          <div class="flow-title">Nafion PEM</div>
+          <div class="flow-sub">protons through</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-icon">🌬️</div>
+          <div class="flow-title">Cathode</div>
+          <div class="flow-sub">2 H2 ←</div>
+        </div>
+      </div>
+      <div style="margin-top:18px;font-size:13.5px;color:var(--text-2);line-height:1.6">
+        Nafion is a <strong>sulfonated tetrafluoroethylene polymer</strong> — a proton conductor that blocks electrons and gases. Without it, the H2 and O2 generated would recombine. The same membrane runs PEM <strong>fuel cells</strong> (reverse direction: H2 + O2 → H2O + electricity).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="h-card">Electrolyzer technology landscape</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Type</th><th>Membrane</th><th>Chemours?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PEM</strong></td>
+            <td><span style="color:var(--purple)">Nafion ion-exchange</span></td>
+            <td><strong style="color:var(--bull)">Yes — proprietary</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Alkaline</strong></td>
+            <td>Liquid KOH (no membrane)</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><strong>SOEC</strong></td>
+            <td>Ceramic at 700-800°C</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><strong>AEM</strong></td>
+            <td>Anion-exchange polymer</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;font-size:12.5px;color:var(--text-2);line-height:1.55">
+        PEM is favored for <strong>variable renewable power input</strong> (dynamic response) and small distributed installations. Alkaline dominates large utility-scale projects. PEM share peaks around <strong>40-50%</strong> of green H2 build in most outlooks.
+      </div>
+    </div>
+  </div>
+
+  <div class="spotlight purple mt-32">
+    <strong>The discipline signal:</strong> Chemours <strong>placed Nafion capacity expansion at Villers-Saint-Paul (France) on long-term hold</strong> after reviewing third-party industry projections showing slower-than-expected near-term hydrogen growth. Management is not pre-building for a market that doesn't yet exist — a quietly contrarian capital allocation choice. <strong>Nafion is "Opportunity" in the SWOT but NOT a 2026-2028 EBITDA driver.</strong> Treat hydrogen as long-dated optionality, not a thesis pillar.
+  </div>
+</section>
+
+<!-- FINANCIALS -->
+<section id="financials">
+  <div class="section-header">
+    <div class="section-kicker">Financials &amp; Forecast</div>
+    <h2 class="section-title">FY26 guidance, three-bank forecast dispersion, and the 2H ramp</h2>
+    <p class="section-subtitle">Company guide: $800-900M EBITDA, 3-5% sales growth. Banks model $816M to $1,132M for FY26E-FY27E — a wide cone because banks disagree on (a) how fast TiO2 recovers, (b) how durable HFC repricing is, and (c) how PFAS hits the P&amp;L.</p>
+  </div>
+
+  <div class="grid-2 mt-20">
+    <div class="card">
+      <div class="h-card">Revenue trajectory <span class="sub">3-bank consensus</span></div>
+      <div class="chart-container">
+        <canvas id="revenue-chart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="h-card">EBITDA trajectory <span class="sub">3-bank consensus + guide</span></div>
+      <div class="chart-container">
+        <canvas id="ebitda-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-32">
+    <div class="h-card">Bank-by-bank model dispersion <span class="sub">$m, FY24A-FY28E</span></div>
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th></th><th>FY24A</th><th>FY25A</th><th>FY26E</th><th>FY27E</th><th>FY28E</th><th>FY27 Δ vs Mid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sub"><td colspan="7" style="color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;font-weight:700">Revenue</td></tr>
+        <tr><td>Goldman Sachs</td><td>5,748</td><td>5,807</td><td>5,969</td><td>6,260</td><td>6,513</td><td class="neg">-2%</td></tr>
+        <tr><td>UBS</td><td>5,748</td><td>5,807</td><td><strong>6,182</strong></td><td><strong>6,706</strong></td><td><strong>7,063</strong></td><td class="pos">+5%</td></tr>
+        <tr><td>Morgan Stanley</td><td>5,748</td><td>5,807</td><td>5,910</td><td>6,174</td><td>6,398</td><td class="neg">-3%</td></tr>
+        <tr class="sub"><td colspan="7" style="color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;font-weight:700">Total EBITDA</td></tr>
+        <tr><td>Goldman Sachs</td><td>786</td><td>742</td><td>855</td><td>958</td><td>1,042</td><td>-7%</td></tr>
+        <tr><td>UBS</td><td>786</td><td>742</td><td><strong>864</strong></td><td><strong>1,132</strong></td><td><strong>1,217</strong></td><td class="pos">+10%</td></tr>
+        <tr><td>Morgan Stanley</td><td>786</td><td>742</td><td>816</td><td>958</td><td>1,032</td><td>-7%</td></tr>
+        <tr class="hl-row"><td>Company guide (mid)</td><td>—</td><td>—</td><td><strong>850</strong></td><td>—</td><td>—</td><td>—</td></tr>
+        <tr class="sub"><td colspan="7" style="color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;font-weight:700">Adj. EPS</td></tr>
+        <tr><td>Goldman Sachs</td><td>1.21</td><td>0.96</td><td>1.38</td><td>2.00</td><td>2.46</td><td>-13%</td></tr>
+        <tr><td>UBS</td><td>1.18</td><td>0.87</td><td>1.35</td><td><strong>2.70</strong></td><td><strong>3.10</strong></td><td class="pos">+17%</td></tr>
+        <tr><td>Morgan Stanley</td><td>1.20</td><td>0.95</td><td>0.86</td><td>1.95</td><td>2.31</td><td>-15%</td></tr>
+        <tr class="sub"><td colspan="7" style="color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;font-weight:700">Free Cash Flow</td></tr>
+        <tr><td>Goldman Sachs</td><td>(1,108)</td><td>51</td><td>193</td><td>263</td><td>333</td><td>-15%</td></tr>
+        <tr><td>UBS</td><td>(409)</td><td>6</td><td>220</td><td><strong>416</strong></td><td><strong>504</strong></td><td class="pos">+34%</td></tr>
+        <tr><td>Morgan Stanley</td><td>(993)</td><td>51</td><td>172</td><td>78</td><td>117</td><td class="neg">-75%</td></tr>
+        <tr class="sub"><td colspan="7" style="color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;font-weight:700">Net Debt / EBITDA</td></tr>
+        <tr><td>Goldman Sachs (fin'l debt only)</td><td>4.26x</td><td>4.61x</td><td>3.83x</td><td>3.20x</td><td>2.68x</td><td></td></tr>
+        <tr><td>UBS (financial debt only)</td><td>4.32x</td><td>4.68x</td><td>3.76x</td><td>2.55x</td><td><strong style="color:var(--bull)">2.00x</strong></td><td></td></tr>
+        <tr><td>Morgan Stanley (incl. PFAS liab.)</td><td>5.61x</td><td>6.44x</td><td>5.39x</td><td>4.62x</td><td><strong style="color:var(--bear)">4.27x</strong></td><td></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:18px;font-size:13px;color:var(--text-2);line-height:1.6">
+      <strong style="color:var(--text-0)">Where the banks disagree most:</strong> UBS bakes a TiO2 cycle inflection into FY27 — modeling <strong>+14% TT volume + 7% price → $347M TT EBITDA</strong> vs ~$200M at GS/MS. UBS also assumes lower capex ($275M) vs MS ($400M). FCF spread in FY28E: $504M (UBS) vs $117M (MS) = <strong>4.3x range</strong>.
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <div class="card">
+      <div class="h-card">Quarterly cadence — FY26E</div>
+      <div class="chart-container">
+        <canvas id="quarterly-chart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="h-card">Q2'26 segment guidance vs cons.</div>
+      <table class="fin-table">
+        <thead><tr><th></th><th>Guide ($M)</th><th>Cons.</th><th>Var.</th></tr></thead>
+        <tbody>
+          <tr><td>TT EBITDA</td><td>40-50</td><td>40</td><td class="pos">+13%</td></tr>
+          <tr><td>TSS EBITDA</td><td>210-225</td><td>228</td><td class="neg">-4%</td></tr>
+          <tr><td>APM EBITDA</td><td>12-18</td><td>34</td><td class="neg">-56%</td></tr>
+          <tr><td>Corporate</td><td>~(47)</td><td>—</td><td>—</td></tr>
+          <tr class="hl-row"><td>Consolidated</td><td><strong>220-250</strong></td><td><strong>256</strong></td><td class="neg">-10%</td></tr>
+        </tbody>
+      </table>
+      <div class="spotlight" style="margin-top:16px;margin-bottom:0;font-size:13px">
+        APM drives the entire 2Q miss — Washington Works outage drag carries into Q2 before the segment "normalizes to $30-40M/quarter" in 2H (RBC). MS view: company's guide <strong>"notably excludes potential benefits from actively developing global TiO2 market dynamics"</strong> — implied upside optionality from sulfur cost-push pricing.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUATION -->
+<section id="valuation">
+  <div class="section-header">
+    <div class="section-kicker">Valuation</div>
+    <h2 class="section-title">A 2.5x range across the sell-side — and the methodology gap that explains it</h2>
+    <p class="section-subtitle">Six published price targets between $12 and $30. The differences aren't about earnings — banks land within 6-18% of each other on FY26E EBITDA. The differences are about <em>what multiple to put on it</em> and <em>what to do with the PFAS liability</em> in net debt.</p>
+  </div>
+
+  <div class="pt-grid">
+    <div class="pt-card bull">
+      <div class="pt-bank">UBS</div>
+      <div class="pt-rating buy">Buy</div>
+      <div class="pt-val">$30</div>
+      <div class="pt-chg">8x NTM EBITDA</div>
+    </div>
+    <div class="pt-card bull">
+      <div class="pt-bank">Mizuho</div>
+      <div class="pt-rating buy">Outperform</div>
+      <div class="pt-val">$30</div>
+      <div class="pt-chg">8x 2028E EBITDA</div>
+    </div>
+    <div class="pt-card bull">
+      <div class="pt-bank">RBC</div>
+      <div class="pt-rating buy">Outperform</div>
+      <div class="pt-val">$29</div>
+      <div class="pt-chg">9x 26E; bull $37</div>
+    </div>
+    <div class="pt-card neutral">
+      <div class="pt-bank">Goldman</div>
+      <div class="pt-rating neutral">Neutral</div>
+      <div class="pt-val">$25</div>
+      <div class="pt-chg">8.8x 27E (from 7.6x)</div>
+    </div>
+    <div class="pt-card neutral">
+      <div class="pt-bank">Jefferies</div>
+      <div class="pt-rating hold">Hold</div>
+      <div class="pt-val">$24</div>
+      <div class="pt-chg">8x 27E w/ 2x penalty</div>
+    </div>
+    <div class="pt-card bear">
+      <div class="pt-bank">Morgan Stanley</div>
+      <div class="pt-rating hold">EW</div>
+      <div class="pt-val">$17</div>
+      <div class="pt-chg">SOTP 9.4x blended</div>
+    </div>
+    <div class="pt-card bear">
+      <div class="pt-bank">CFRA</div>
+      <div class="pt-rating sell">Sell</div>
+      <div class="pt-val">$12</div>
+      <div class="pt-chg">6x 27E EPS</div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <div class="card">
+      <div class="h-card">PT distribution vs current price</div>
+      <div class="chart-container">
+        <canvas id="pt-chart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="h-card">UBS SOTP framework</div>
+      <table class="fin-table">
+        <thead><tr><th>Segment</th><th>EBITDA</th><th>Multiple</th><th>EV ($M)</th></tr></thead>
+        <tbody>
+          <tr><td>TT</td><td>347</td><td>5.5x</td><td>1,907</td></tr>
+          <tr><td>TSS</td><td>806</td><td>9.0x</td><td>7,250</td></tr>
+          <tr><td>APM</td><td>146</td><td>7.0x</td><td>1,025</td></tr>
+          <tr><td>Other</td><td>5</td><td>7x</td><td>35</td></tr>
+          <tr><td>Corporate</td><td>(172)</td><td>8x</td><td>(1,375)</td></tr>
+          <tr class="hl-row"><td>EV</td><td></td><td></td><td><strong>8,842</strong></td></tr>
+          <tr><td>Less: financial net debt</td><td></td><td></td><td>(3,251)</td></tr>
+          <tr><td>Less: PFAS PV</td><td></td><td></td><td>(1,485)</td></tr>
+          <tr class="hl-row"><td>Equity</td><td></td><td></td><td><strong>4,106</strong></td></tr>
+          <tr><td>Shares (m)</td><td></td><td></td><td>151.6</td></tr>
+          <tr class="hl-row"><td>Implied / share</td><td></td><td></td><td><strong style="color:var(--bull)">$27 (NTM $30)</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- BULL BEAR -->
+<section id="bullbear">
+  <div class="section-header">
+    <div class="section-kicker bull">The Debate</div>
+    <h2 class="section-title">Bull vs Bear — point by point</h2>
+    <p class="section-subtitle">Both sides have evidence. The market is currently pricing closer to the bear case (stock at ~$22 vs $17-30 PT range). The investable question is whether the catalyst path through 2027 (TT recovery + Opteon scale + 2-PIC commercialization + PFAS settlement clarity) is enough to bridge the gap.</p>
+  </div>
+
+  <div class="bullbear-grid">
+    <div class="bullbear-col bull">
+      <div class="bullbear-h bull">▲ Bull Case</div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Opteon HFO compounds for a decade <span class="bullbear-tag bull">$1.8B by FY28</span></div>
+        <div class="bullbear-item-p">AIM Act mandates 85% HFC phase-down by 2036. OEMs already "shifted almost entirely to R-454B in 2024." Chemours one of only a few global suppliers at scale (per Johnson Controls). Capacity +40% expanded at Corpus Christi. UBS models Opteon volume +12-14% Y/Y through FY28.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">2-PIC = a new Opteon by 2030 <span class="bullbear-tag bull">$3B TAM</span></div>
+        <div class="bullbear-item-p">Samsung qualification (Aug 2025) validates Opteon 2P50 for hyperscale memory. Navin Fluorine manufacturing site mid-2026. RBC: by 2030, EBITDA from immersion cooling could match the entire Opteon franchise. EPA TSCA prioritization helps speed market access.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">TiO2 cost-curve advantage hardening <span class="bullbear-tag bull">500-1000 bps</span></div>
+        <div class="bullbear-item-p">Sulfur +140% YoY pushes sulfate competitors up the cost curve. EU 32% anti-dumping protects Western share. Chinese sulfur up ~300% (SMIFS). Chloride process gives Chemours a sustainable margin moat against the entire Asian competitive set. UBS bull: $347M FY27 TT EBITDA.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">PFAS liability is contained, not open-ended <span class="bullbear-tag">$4B cap</span></div>
+        <div class="bullbear-item-p">DuPont/Corteva indemnity caps Chemours' lifetime PFAS exposure. NJ already settled ($875M state-wide; CC's share NPV ~$250-270M paid over 30 years). National public water resolution closed at $1.185B. Mizuho: "ring-fences near-term cash flows; catastrophic end-points no longer most probable."</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">"Pathway to Thrive" cost program <span class="bullbear-tag bull">$250M run-rate</span></div>
+        <div class="bullbear-item-p">Targeting >$250M run-rate cost savings 2024-2027. $125M already realized in 2025 (50% complete). $9M annual interest savings from March 2026 refinancing. Direct flow-through to EBITDA guide.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Deleveraging on track <span class="bullbear-tag bull">3.8x by YE26</span></div>
+        <div class="bullbear-item-p">Kuan Yin Taiwan sale $360M (Jan 2026); $160M debt paydown in April 2026. $700M refinancing March 2026 extended maturities to 2034. Dividend cut 65% to $0.35/yr to prioritize debt. Target leverage <3.8x by YE26, <3.0x long-term.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">mREC rare-earth optionality <span class="bullbear-tag">free upside</span></div>
+        <div class="bullbear-item-p">Mixed Rare Earth Concentrate extraction from iron-chloride waste streams via Energy Fuels alliance. Monetizes a waste byproduct at near-zero incremental feedstock cost — no new mining permits or greenfield capex. Heavy-REE pilot already running.</div>
+      </div>
+    </div>
+
+    <div class="bullbear-col bear">
+      <div class="bullbear-h bear">▼ Bear Case</div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">PFAS tail risk is not capped in practice <span class="bullbear-tag high">$750M+ outstanding</span></div>
+        <div class="bullbear-item-p">AFFF MDL claims at 120-130k; 15,000+ active lawsuits. Bellwether trials late 2026-2027. EU REACH PFAS restrictions due ~2029 imply 3.6% revenue risk to Teflon/PTFE demand. Dordrecht €75M retool. RFK Jr. as HHS Sec. raises political risk profile on PFAS, GenX, AND TiO2 (CFRA).</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">HFO patent expiry around 2030 <span class="bullbear-tag high">commoditization</span></div>
+        <div class="bullbear-item-p">Former Sr. Principal Technical Consultant at Chemours: "Expiration of lucrative HFO patents around 2030 will likely invite aggressive competition from generic Asian producers." Margins of 30%+ will compress as Chinese R-32 producers (34% of global blendstock) flow into the value chain.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Honeywell already has the R-454B edge <span class="bullbear-tag med">share risk</span></div>
+        <div class="bullbear-item-p">Per Johnson Controls Director: Honeywell holds "slight competitive edge in R-454B due to patent advantages and greater supply capacity." Chemours prices R-454B 5-10% below Honeywell. R-454B pricing expected to decline from $8/lb scarcity highs to $4-5/lb as production scales.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">TiO2 demand structurally lower <span class="bullbear-tag med">housing + China</span></div>
+        <div class="bullbear-item-p">Q1'26 TT volumes -7% YoY (4 consecutive YoY declines). 2026 US housing starts -3.7% (CFRA). NA auto -2.6%. Customer concentration: a single customer >10% of TT sales (CFRA). Even with sulfur tailwind, MS keeps utilization at ~65% through FY28.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Leverage looks worse including PFAS <span class="bullbear-tag high">8.5x by CFRA</span></div>
+        <div class="bullbear-item-p">CFRA: net debt/EBITDA = 8.5x at YE25 (vs 4.9x ex-PFAS). EBIT/interest coverage 1.6x. Q1'26 FCF -$93M. MS includes the $1.3B "Other Liabilities" PFAS accrual in net debt; UBS/GS don't. The treatment determines whether CC is investment-grade-adjacent or distressed.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Governance reset still recent <span class="bullbear-tag med">2024 CFO removal</span></div>
+        <div class="bullbear-item-p">Feb 2024: CEO + CFO placed on administrative leave; internal review found "manipulating working capital practices to artificially meet free cash flow targets tied to incentive compensation." New leadership in place but reputational overhang persists.</div>
+      </div>
+
+      <div class="bullbear-item">
+        <div class="bullbear-item-h">Nafion / hydrogen is a story, not a number <span class="bullbear-tag">long-dated</span></div>
+        <div class="bullbear-item-p">Chemours just placed Villers-Saint-Paul Nafion capacity expansion on long-term hold — third-party demand projections for hydrogen came in below expectations. The hydrogen optionality is genuinely real but is a 2030+ event, not a 2026-2028 earnings driver.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATALYSTS -->
+<section id="catalysts">
+  <div class="section-header">
+    <div class="section-kicker gold">Catalyst Calendar</div>
+    <h2 class="section-title">What moves the stock — and when</h2>
+    <p class="section-subtitle">A linear stack of the dated catalysts that materially shift either the EBITDA path or the PFAS liability. Color = direction.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-item bull">
+      <div class="when">Q2 / Mid-2026</div>
+      <div class="what">Navin Fluorine first global liquid-cooling manufacturing site online</div>
+      <div class="why">Validates the 2-PIC supply chain. Initial $14M investment; Phase 2 could 10x. Phase 1 fluid out into hyperscaler qualification programs.</div>
+    </div>
+    <div class="timeline-item warn">
+      <div class="when">Q3 2026</div>
+      <div class="what">NC Supreme Court ruling on AG-suit authority</div>
+      <div class="why">Determines whether NC's natural resource damages suit proceeds. Favorable ruling preserves headroom under the $4B cost-sharing cap. Adverse ruling could mirror NJ-scale settlement obligations.</div>
+    </div>
+    <div class="timeline-item bull">
+      <div class="when">H2 2026</div>
+      <div class="what">TiO2 H2'26 price increases take effect</div>
+      <div class="why">December 2025 and April 2026 price hikes feeding through. Combined with sulfur cost-push on sulfate competitors, this is the inflection on TT EBITDA from $145M (FY25) toward $200-350M (FY27 bank range).</div>
+    </div>
+    <div class="timeline-item bull">
+      <div class="when">Late 2026</div>
+      <div class="what">2-PIC commercialization</div>
+      <div class="why">Opteon 2P50 ramps into Samsung Gen-4 SSD platforms + first hyperscaler tank deployments. Initial revenue contribution small but the proof-of-commercial-scale unlocks the $3B TAM narrative.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="when">YE 2026</div>
+      <div class="what">Net leverage target &lt;3.8x EBITDA</div>
+      <div class="why">Bridges from 4.9x. Combination of EBITDA growth + Kuan Yin debt paydown. Hitting target unlocks "Pathway to Thrive" Phase 2 capital return optionality.</div>
+    </div>
+    <div class="timeline-item bear">
+      <div class="when">Late 2026 → 2027</div>
+      <div class="what">AFFF MDL bellwether trials in SC federal court</div>
+      <div class="why">First test of personal-injury claim valuations. Adverse precedent + 120-130k claims + indemnity cap headroom (~$1.2-1.4B remaining) = potential breach of the $4B Chemours/DuPont/Corteva cap.</div>
+    </div>
+    <div class="timeline-item bull">
+      <div class="when">2028</div>
+      <div class="what">Olin long-term chlorine supply agreement starts</div>
+      <div class="why">Replaces PCC arrangement at DeLisle. Locks in chloride feedstock structure for TT through the decade — strategically more important than the dollar value of the contract itself.</div>
+    </div>
+    <div class="timeline-item bull">
+      <div class="when">2028</div>
+      <div class="what">2-PIC full financial contribution</div>
+      <div class="why">RBC forecasts revenue + EBITDA from liquid cooling becomes "comparable to entire Opteon franchise by 2030." 2028 is the first year it's material to consolidated EBITDA.</div>
+    </div>
+    <div class="timeline-item bear">
+      <div class="when">~2029</div>
+      <div class="what">EU REACH PFAS restriction adoption</div>
+      <div class="why">Class-wide PFAS restriction in Europe — Capstone DC pegs <strong>3.6% of total Chemours revenue at risk</strong> from APM demand destruction. Dordrecht €75M retool already underway in anticipation.</div>
+    </div>
+    <div class="timeline-item bear">
+      <div class="when">~2029-2031</div>
+      <div class="what">HFO patent expirations begin</div>
+      <div class="why">Patent protection on R-1234yf compositions expires. Generic Asian competition expected. Composition-of-matter patents protect blends through mid-2030s, but margins compress.</div>
+    </div>
+    <div class="timeline-item warn">
+      <div class="when">2030</div>
+      <div class="what">EU F-Gas full ban on high-GWP gases</div>
+      <div class="why">Tailwind for HFO mix; final extinction of HFC OEM channel in Europe. AIM Act US equivalent step-down to 70% cap same year.</div>
+    </div>
+    <div class="timeline-item bull">
+      <div class="when">2034</div>
+      <div class="what">Refinanced debt maturity wall</div>
+      <div class="why">$700M refinancing in March 2026 extended maturities to 2034 — a 8-year runway. Combined with sub-3x leverage by FY27-28, this fundamentally de-risks the balance sheet.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="when">2036</div>
+      <div class="what">AIM Act final 85% HFC phase-down step</div>
+      <div class="why">The legal endpoint. By this date, the U.S. has effectively eliminated 85% of legacy HFC consumption vs. baseline. Opteon installed base = the maintained-fleet refrigerant economy.</div>
+    </div>
+  </div>
+</section>
+
+<!-- RISKS -->
+<section id="risks">
+  <div class="section-header">
+    <div class="section-kicker bear">Risk Matrix</div>
+    <h2 class="section-title">What kills the thesis</h2>
+    <p class="section-subtitle">Severity-tagged. Not all risks are equally dangerous — the PFAS tail and the patent cliff are existential; the macro and customer concentration risks are recoverable.</p>
+  </div>
+
+  <div class="risk-grid">
+    <div class="risk-card">
+      <div class="risk-level high">High</div>
+      <div class="risk-h">PFAS liability cap exhaustion</div>
+      <div class="risk-p">AFFF MDL personal-injury claims at 120-130k; bellwether trials late 2026-2027. If settlements consume the remaining ~$1.2-1.4B headroom under the $4B DuPont indemnity cap, Chemours assumes <strong>full unmitigated exposure</strong> to all remaining liabilities.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level high">High</div>
+      <div class="risk-h">HFO patent cliff 2029-2031</div>
+      <div class="risk-p">R-1234yf composition patents begin expiring at end of decade. Former Chemours technical consultant: "rapid commoditization from Asian manufacturers." TSS 33% margin profile likely compresses. Magnitude depends on blend / formulation patent extension.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level high">High</div>
+      <div class="risk-h">EU REACH PFAS class restriction</div>
+      <div class="risk-p">Capstone DC: <strong>3.6% of total revenue at risk</strong> from demand destruction in Teflon and PTFE applications across Europe. Adoption ~2029. Dordrecht €75M retool addresses emissions, not the demand-side ban.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level med">Med-High</div>
+      <div class="risk-h">Leverage / FCF mismatch</div>
+      <div class="risk-p">Net debt/EBITDA 4.9x (ex-PFAS) or 8.5x (incl., per CFRA). EBIT/interest coverage 1.6x. Q1'26 FCF -$93M. Hitting the &lt;3.8x target requires both EBITDA growth and asset sales to materialize.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level med">Medium</div>
+      <div class="risk-h">Honeywell / Solstice R-454B share</div>
+      <div class="risk-p">Honeywell holds patent + capacity edge in R-454B. Chemours prices 5-10% below to compete. R-454B price expected to decline from $8/lb scarcity highs to $4-5/lb. Stationary aftermarket: "progressively losing product allocation priority" (former CC sales leader).</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level med">Medium</div>
+      <div class="risk-h">TiO2 China overcapacity</div>
+      <div class="risk-p">LB Group + Chinese sulfate producers redirecting supply into LatAm, India to escape EU 32% anti-dumping. Customer concentration: single customer >10% of TT sales. Sulfur cost helps near-term but doesn't structurally remove 6M+ MT of Chinese nameplate.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level med">Medium</div>
+      <div class="risk-h">HFC pricing normalization</div>
+      <div class="risk-p">Q1'26 TSS beat partly driven by a peer's HFC outage that tightened supply. UBS: TSS missed Q2 cons by $10M "due to demand pulled forward into 1Q." If HFC pricing normalizes faster than Opteon ramps, near-term EBITDA at risk.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level med">Medium</div>
+      <div class="risk-h">Macro housing / construction</div>
+      <div class="risk-p">CFRA: 2026 US housing starts -3.7%; NA auto production -2.6%. TiO2 demand correlates with paint, plastics, packaging. Deutsche Bank base case: EU GDP +1.1%, US +2.4% — limits cyclical recovery in TT despite cost-curve tailwinds.</div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-level low">Low</div>
+      <div class="risk-h">Governance overhang</div>
+      <div class="risk-p">Feb 2024 CEO/CFO removal for FCF metric manipulation. New CEO/CFO + audit reset in place. Internal controls strengthened. Reputational risk fading but not gone — institutional investors still adjust for it.</div>
+    </div>
+  </div>
+
+  <div class="spotlight bear" style="margin-top:32px">
+    <strong>Composite assessment:</strong> AlphaSense Quality Screen scores Chemours <strong>11.0/16 (69%) — "Above Average" tier, Medium Conviction</strong>. Tier-up triggers: comprehensive AFFF settlement ringfencing liabilities below the $4B cap (+1.0 pt), or net leverage &lt;3.0x unlocking capital return (+0.5 pt). Tier-down trigger: EU/EPA blanket fluoropolymer bans without industrial exemptions (-1.0 pt).
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="max-width:1500px;margin:0 auto;padding:0 32px">
+    <p style="color:var(--text-1);font-weight:600">Chemours · CC US · First-Principles Research Dashboard</p>
+    <p style="margin-top:6px">All data sourced from Q1 2026 sell-side research (Morgan Stanley, Goldman Sachs, UBS, Jefferies, RBC, Mizuho, CFRA), bank financial models (GS, UBS, MS), and AlphaSense Industry / Strategic / Sector-Cycle / Quality / Bull-Bear primers (May 2026). Cross-referenced against company guidance.</p>
+    <p class="src">For institutional research use. Not investment advice. All forward estimates from third-party bank models — verify against latest filings.</p>
+  </div>
+</footer>
+
+<script>
+// ====== TradingView widget ======
+function loadTV() {
+  const s = document.createElement('script');
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  s.async = true;
+  s.innerHTML = JSON.stringify({
+    "autosize": true,
+    "symbol": "NYSE:CC",
+    "interval": "D",
+    "timezone": "America/New_York",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "enable_publishing": false,
+    "backgroundColor": "rgba(11, 16, 32, 1)",
+    "gridColor": "rgba(120, 160, 240, 0.1)",
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": false,
+    "calendar": false,
+    "support_host": "https://www.tradingview.com"
+  });
+  document.getElementById('tv-widget').appendChild(s);
+}
+loadTV();
+
+// ====== Counters ======
+function animateCounter(el) {
+  const target = parseFloat(el.dataset.counter);
+  const suffix = el.dataset.suffix || '';
+  const unit = el.querySelector('.stat-unit')?.outerHTML || '';
+  const isInt = target % 1 === 0;
+  let current = 0;
+  const duration = 1400;
+  const start = performance.now();
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    current = target * eased;
+    el.innerHTML = (isInt ? Math.round(current) : current.toFixed(1)) + suffix + unit;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+const counters = document.querySelectorAll('[data-counter]');
+const counterObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCounter(e.target);
+      counterObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+counters.forEach(c => counterObs.observe(c));
+
+// ====== Bar animations ======
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const bar = e.target;
+      const v = parseFloat(bar.dataset.bar);
+      bar.style.width = v + '%';
+      barObs.unobserve(bar);
+    }
+  });
+}, { threshold: 0.2 });
+document.querySelectorAll('[data-bar]').forEach(b => barObs.observe(b));
+
+// ====== Chart.js defaults ======
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#8b97b8';
+Chart.defaults.plugins.legend.labels.color = '#c9d3eb';
+Chart.defaults.plugins.legend.labels.font = { family: "'Inter'", size: 12, weight: '500' };
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(11, 16, 32, 0.98)';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(0, 217, 255, 0.5)';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.titleColor = '#fff';
+Chart.defaults.plugins.tooltip.bodyColor = '#c9d3eb';
+Chart.defaults.plugins.tooltip.titleFont = { weight: '700' };
+const gridX = { color: 'rgba(120,160,240,0.06)', display: true };
+const gridY = { color: 'rgba(120,160,240,0.06)', display: true };
+
+// ====== Segment mix (revenue + EBITDA donut) ======
+new Chart(document.getElementById('segment-mix'), {
+  type: 'doughnut',
+  data: {
+    labels: ['TT — Titanium Tech (42%)', 'TSS — Refrigerants (36%)', 'APM — Fluoropolymers (22%)', 'Other (1%)'],
+    datasets: [{
+      label: 'FY25 Revenue',
+      data: [2427, 2067, 1263, 50],
+      backgroundColor: ['#fbbf24', '#00d9ff', '#a78bfa', '#5b6789'],
+      borderColor: '#0b1020',
+      borderWidth: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.toLocaleString() + 'M' } }
+    }
+  }
+});
+
+// ====== Sulfur price chart ======
+new Chart(document.getElementById('sulfur-chart'), {
+  type: 'line',
+  data: {
+    labels: ['Q2 23', 'Q4 23', 'Q2 24', 'Q4 24', 'Q1 25', 'Q3 25', 'Q4 25', 'Q1 26', 'Q2 26'],
+    datasets: [{
+      label: 'Sulfur Price ($/long ton, global)',
+      data: [105, 130, 180, 220, 240, 290, 380, 480, 655],
+      borderColor: '#fbbf24',
+      backgroundColor: 'rgba(251, 191, 36, 0.15)',
+      fill: true,
+      tension: 0.35,
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }, {
+      label: 'Chinese sulfur (relative index)',
+      data: [100, 140, 200, 260, 290, 340, 460, 580, 800],
+      borderColor: '#f87171',
+      backgroundColor: 'rgba(248, 113, 113, 0.08)',
+      fill: false,
+      tension: 0.35,
+      borderWidth: 2,
+      borderDash: [5, 4],
+      pointRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => '$' + v } }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y } }
+    }
+  }
+});
+
+// ====== TiO2 capacity share ======
+new Chart(document.getElementById('tio2-capacity'), {
+  type: 'bar',
+  data: {
+    labels: ['Chemours', 'LB Group (CN)', 'Tronox', 'Kronos', 'Venator', 'Other Chinese', 'Rest of World'],
+    datasets: [{
+      label: 'Nameplate (kMT)',
+      data: [1100, 1300, 800, 500, 380, 4900, 1100],
+      backgroundColor: ['#fbbf24', '#f87171', '#00d9ff', '#a78bfa', '#5b6789', '#fb923c', '#2dd4bf'],
+      borderColor: '#0b1020',
+      borderWidth: 1.5,
+      borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX, ticks: { callback: v => v.toLocaleString() + ' kMT' } },
+      y: { grid: { display: false } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.parsed.x.toLocaleString() + ' kMT (' + (ctx.parsed.x / 10000 * 100).toFixed(1) + '%)' } }
+    }
+  }
+});
+
+// ====== AIM Act phase-down chart ======
+new Chart(document.getElementById('aim-act-chart'), {
+  type: 'line',
+  data: {
+    labels: ['2020', '2022', '2024', '2026', '2029', '2032', '2034', '2036'],
+    datasets: [{
+      label: 'AIM Act HFC quota (% of 2020 baseline)',
+      data: [100, 90, 60, 60, 30, 30, 20, 15],
+      borderColor: '#00d9ff',
+      backgroundColor: 'rgba(0, 217, 255, 0.15)',
+      stepped: true,
+      fill: true,
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }, {
+      label: 'EU F-Gas: high-GWP cap (% of baseline)',
+      data: [100, 75, 55, 35, 10, 5, 0, 0],
+      borderColor: '#a78bfa',
+      backgroundColor: 'rgba(167, 139, 250, 0.08)',
+      stepped: true,
+      fill: false,
+      borderWidth: 2,
+      borderDash: [5, 4],
+      pointRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => v + '%' }, min: 0, max: 100 }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } }
+    }
+  }
+});
+
+// ====== Opteon ramp ======
+new Chart(document.getElementById('opteon-chart'), {
+  type: 'bar',
+  data: {
+    labels: ['FY23A', 'FY24A', 'FY25A', 'FY26E', 'FY27E', 'FY28E'],
+    datasets: [{
+      label: 'Opteon (HFO) Sales ($M)',
+      data: [560, 810, 1265, 1377, 1569, 1820],
+      backgroundColor: 'rgba(0, 217, 255, 0.75)',
+      borderColor: '#00d9ff',
+      borderWidth: 1.5,
+      borderRadius: 6,
+      stack: 'tss'
+    }, {
+      label: 'Freon (HFC) Sales ($M)',
+      data: [780, 616, 427, 539, 453, 423],
+      backgroundColor: 'rgba(248, 113, 113, 0.6)',
+      borderColor: '#f87171',
+      borderWidth: 1.5,
+      borderRadius: 6,
+      stack: 'tss'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX, stacked: true },
+      y: { grid: gridY, stacked: true, ticks: { callback: v => '$' + v + 'M' } }
+    },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+
+// ====== DC TAM ramp ======
+new Chart(document.getElementById('dc-tam'), {
+  type: 'line',
+  data: {
+    labels: ['2025', '2026', '2027', '2028', '2029', '2030'],
+    datasets: [{
+      label: '2-PIC TAM ($B)',
+      data: [0.05, 0.15, 0.45, 1.0, 1.9, 3.0],
+      borderColor: '#ffb84d',
+      backgroundColor: 'rgba(255, 184, 77, 0.15)',
+      fill: true,
+      tension: 0.35,
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => '$' + v + 'B' } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// ====== PFAS cap waterfall ======
+new Chart(document.getElementById('pfas-cap'), {
+  type: 'bar',
+  data: {
+    labels: ['$4B Cost-Share Cap', 'Spent to date', 'NJ Settlement (PV)', 'Public water resolution', 'Remaining headroom', 'AFFF MDL exposure ('],
+    datasets: [{
+      label: '$M (Chemours share)',
+      data: [2000, -1023, -250, -593, 134, -750],
+      backgroundColor: ctx => {
+        const v = ctx.raw;
+        if (ctx.dataIndex === 0) return 'rgba(0, 217, 255, 0.6)';
+        if (ctx.dataIndex === 4) return 'rgba(52, 211, 153, 0.6)';
+        return 'rgba(248, 113, 113, 0.6)';
+      },
+      borderColor: ctx => {
+        if (ctx.dataIndex === 0) return '#00d9ff';
+        if (ctx.dataIndex === 4) return '#34d399';
+        return '#f87171';
+      },
+      borderWidth: 1.5,
+      borderRadius: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    scales: {
+      x: { grid: gridX, ticks: { callback: v => '$' + v + 'M' } },
+      y: { grid: { display: false } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.x.toLocaleString() + 'M' } }
+    }
+  }
+});
+
+// ====== Revenue trajectory ======
+new Chart(document.getElementById('revenue-chart'), {
+  type: 'line',
+  data: {
+    labels: ['FY22A', 'FY23A', 'FY24A', 'FY25A', 'FY26E', 'FY27E', 'FY28E'],
+    datasets: [{
+      label: 'Goldman Sachs',
+      data: [6794, 6028, 5748, 5807, 5969, 6260, 6513],
+      borderColor: '#00d9ff',
+      backgroundColor: 'rgba(0, 217, 255, 0.08)',
+      tension: 0.3,
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: false
+    }, {
+      label: 'UBS',
+      data: [6794, 6028, 5748, 5807, 6182, 6706, 7063],
+      borderColor: '#34d399',
+      backgroundColor: 'rgba(52, 211, 153, 0.08)',
+      tension: 0.3,
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: false
+    }, {
+      label: 'Morgan Stanley',
+      data: [6794, 6028, 5748, 5807, 5910, 6174, 6398],
+      borderColor: '#f87171',
+      backgroundColor: 'rgba(248, 113, 113, 0.08)',
+      tension: 0.3,
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => '$' + (v / 1000).toFixed(1) + 'B' } }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() + 'M' } }
+    }
+  }
+});
+
+// ====== EBITDA trajectory ======
+new Chart(document.getElementById('ebitda-chart'), {
+  type: 'bar',
+  data: {
+    labels: ['FY22A', 'FY23A', 'FY24A', 'FY25A', 'FY26E', 'FY27E', 'FY28E'],
+    datasets: [{
+      label: 'Goldman Sachs',
+      data: [1419, 980, 786, 742, 855, 958, 1042],
+      backgroundColor: 'rgba(0, 217, 255, 0.65)',
+      borderColor: '#00d9ff',
+      borderWidth: 1.5,
+      borderRadius: 5
+    }, {
+      label: 'UBS (Buy thesis)',
+      data: [1419, 980, 786, 742, 864, 1132, 1217],
+      backgroundColor: 'rgba(52, 211, 153, 0.65)',
+      borderColor: '#34d399',
+      borderWidth: 1.5,
+      borderRadius: 5
+    }, {
+      label: 'Morgan Stanley (EW thesis)',
+      data: [1419, 980, 786, 742, 816, 958, 1032],
+      backgroundColor: 'rgba(248, 113, 113, 0.65)',
+      borderColor: '#f87171',
+      borderWidth: 1.5,
+      borderRadius: 5
+    }, {
+      type: 'line',
+      label: 'Company guide midpoint',
+      data: [null, null, null, null, 850, null, null],
+      borderColor: '#ffb84d',
+      backgroundColor: '#ffb84d',
+      pointRadius: 7,
+      pointHoverRadius: 9,
+      showLine: false
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => '$' + v + 'M' } }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + (ctx.parsed.y ?? 0).toLocaleString() + 'M' } }
+    }
+  }
+});
+
+// ====== Quarterly cadence ======
+new Chart(document.getElementById('quarterly-chart'), {
+  type: 'bar',
+  data: {
+    labels: ['Q1\'26A', 'Q2\'26E', 'Q3\'26E', 'Q4\'26E'],
+    datasets: [{
+      label: 'TT EBITDA',
+      data: [18, 45, 54, 51],
+      backgroundColor: 'rgba(251, 191, 36, 0.8)',
+      borderColor: '#fbbf24',
+      stack: 'q',
+      borderRadius: 4
+    }, {
+      label: 'TSS EBITDA',
+      data: [190, 220, 210, 151],
+      backgroundColor: 'rgba(0, 217, 255, 0.8)',
+      borderColor: '#00d9ff',
+      stack: 'q',
+      borderRadius: 4
+    }, {
+      label: 'APM EBITDA',
+      data: [5, 15, 31, 30],
+      backgroundColor: 'rgba(167, 139, 250, 0.8)',
+      borderColor: '#a78bfa',
+      stack: 'q',
+      borderRadius: 4
+    }, {
+      label: 'Other',
+      data: [3, 1, 1, 1],
+      backgroundColor: 'rgba(45, 212, 191, 0.7)',
+      borderColor: '#2dd4bf',
+      stack: 'q',
+      borderRadius: 4
+    }, {
+      label: 'Corporate',
+      data: [-47, -46, -45, -45],
+      backgroundColor: 'rgba(248, 113, 113, 0.7)',
+      borderColor: '#f87171',
+      stack: 'q',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX, stacked: true },
+      y: { grid: gridY, stacked: true, ticks: { callback: v => '$' + v + 'M' } }
+    },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+
+// ====== PT Distribution ======
+new Chart(document.getElementById('pt-chart'), {
+  type: 'bar',
+  data: {
+    labels: ['CFRA Sell', 'MS EW', 'Jefferies Hold', 'GS Neutral', 'RBC Buy', 'Mizuho Buy', 'UBS Buy'],
+    datasets: [{
+      label: 'PT ($)',
+      data: [12, 17, 24, 25, 29, 30, 30],
+      backgroundColor: ['#f87171', '#f87171', '#fbbf24', '#fbbf24', '#34d399', '#34d399', '#34d399'],
+      borderColor: '#0b1020',
+      borderWidth: 1.5,
+      borderRadius: 6
+    }, {
+      type: 'line',
+      label: 'Spot $22.38',
+      data: [22.38, 22.38, 22.38, 22.38, 22.38, 22.38, 22.38],
+      borderColor: '#fff',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: gridX },
+      y: { grid: gridY, ticks: { callback: v => '$' + v } }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y } }
+    }
+  }
+});
+
+// ====== Footprint Leaflet map ======
+const fpMap = L.map('footprint-map', {
+  center: [38, -10],
+  zoom: 3,
+  minZoom: 2,
+  maxZoom: 6,
+  worldCopyJump: true,
+  zoomControl: true,
+  attributionControl: true
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(fpMap);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+  attribution: '',
+  subdomains: 'abcd',
+  maxZoom: 19,
+  pane: 'shadowPane'
+}).addTo(fpMap);
+
+const facilities = [
+  // TT (chloride TiO2 plants)
+  { name: 'DeLisle, MS (USA)', lat: 30.385, lng: -89.227, type: 'tt', desc: 'Largest chloride TiO2 plant in the Western Hemisphere. Long-term Olin chlorine contract begins 2028.' },
+  { name: 'New Johnsonville, TN (USA)', lat: 36.018, lng: -87.965, type: 'tt', desc: 'Chloride TiO2 / Ti-Pure base load capacity in the U.S. Midwest.' },
+  { name: 'Altamira, Tamaulipas (Mexico)', lat: 22.412, lng: -97.928, type: 'tt', desc: 'Chloride TiO2 — Latin America export hub.' },
+  { name: 'Kuan Yin, Taiwan', lat: 25.034, lng: 121.064, type: 'sold', desc: 'TiO2 site SOLD January 2026 for $360M gross. TT Transformation Plan ~$100M run-rate benefit. €140M of proceeds repaid Euro Term loans.' },
+  // TSS (refrigerants)
+  { name: 'Corpus Christi, TX (USA)', lat: 27.804, lng: -97.396, type: 'tss', desc: 'Opteon HFO refrigerants — capacity +40% expansion completed late 2024. The Opteon ramp lives here.' },
+  { name: 'Louisville Works, KY (USA)', lat: 38.252, lng: -85.745, type: 'tss', desc: 'Legacy Freon (HFC) and fluoroproduct manufacturing.' },
+  // APM (fluoropolymers, Nafion)
+  { name: 'Fayetteville Works, NC (USA)', lat: 34.840, lng: -78.870, type: 'apm', desc: 'Teflon + Nafion + GenX site. Federal consent order in place for PFAS remediation. The single most important plant in the Chemours network for both upside (Nafion) and litigation risk.' },
+  { name: 'Washington Works, WV (USA)', lat: 39.298, lng: -81.611, type: 'paused', desc: 'PFOA-era legacy site. Operational outage Aug 2025 (utility-driven) caused $20-25M earnings drag in Q1\'26 APM. Back online but SPS Capstone manufacturing shut down here.' },
+  { name: 'Chambers Works, NJ (USA)', lat: 39.621, lng: -75.502, type: 'paused', desc: 'SPS (Surface Protection Solutions) Capstone manufacturing exited Q3 2025 due to regulatory + economic pressure.' },
+  { name: 'Niagara Falls, NY (USA)', lat: 43.094, lng: -79.058, type: 'apm', desc: 'Fluoropolymer manufacturing in the Northeast cluster.' },
+  { name: 'Dordrecht (Netherlands)', lat: 51.812, lng: 4.690, type: 'apm', desc: 'European fluorochemicals hub. €75M committed to retool emissions ahead of EU REACH PFAS restrictions. The European front line.' },
+  { name: 'Villers-Saint-Paul (France)', lat: 49.346, lng: 2.493, type: 'paused', desc: 'Nafion membrane site. EXPANSION PLACED ON LONG-TERM HOLD after third-party hydrogen demand projections came in below expectations.' },
+  { name: 'Mechelen (Belgium)', lat: 51.027, lng: 4.479, type: 'apm', desc: 'Specialty fluoropolymer + materials.' },
+  { name: 'Changshu (China)', lat: 31.660, lng: 120.752, type: 'apm', desc: 'APM contract-style fluoropolymer manufacturing for Asian markets.' },
+  { name: 'Shimizu / Dahej (India — SRF JV)', lat: 21.703, lng: 72.595, type: 'tss', desc: 'SRF Limited partnership Aug 2025 — fluoroelastomer capacity with no upfront capital. Asia growth + diversification.' },
+  // HQ
+  { name: 'HQ — Wilmington, DE', lat: 39.745, lng: -75.547, type: 'hq', desc: 'Corporate headquarters. Spun out of DuPont 2015.' }
+];
+
+const colorMap = {
+  tt: '#fbbf24',
+  tss: '#00d9ff',
+  apm: '#a78bfa',
+  paused: '#f87171',
+  sold: '#f87171',
+  hq: '#34d399'
+};
+
+facilities.forEach(f => {
+  const marker = L.circleMarker([f.lat, f.lng], {
+    radius: f.type === 'hq' ? 9 : 8,
+    fillColor: colorMap[f.type],
+    color: '#0b1020',
+    weight: 2,
+    fillOpacity: 0.85
+  }).addTo(fpMap);
+  marker.bindPopup(`<div style="font-weight:700;color:#fff;margin-bottom:6px">${f.name}</div><div style="font-size:11.5px;color:#c9d3eb;line-height:1.5">${f.desc}</div>`);
+  marker.bindTooltip(f.name, { direction: 'top', offset: [0, -8] });
+});
+
+</script>
+</body>
+</html>
